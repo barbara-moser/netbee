@@ -240,56 +240,56 @@ public:
 
 	int CreateTable(struct _nbNetPDLElementLookupTable* LookupTable);
 
-	int GetTableID(char* TableName, char *DataName, int *TableID, int *DataID);
+	int GetTableID(char* TableName, char *DataName, long long* TableID, unsigned long long* DataID);
 
-	struct _nbLookupTableKey* GetStructureForTableKey(int TableID);
-	struct _nbLookupTableData* GetStructureForTableData(int TableID);
+	struct _nbLookupTableKey* GetStructureForTableKey(long long TableID);
+	struct _nbLookupTableData* GetStructureForTableData(long long TableID);
 
-	int AddTableEntry(int TableID, struct _nbLookupTableKey KeyList[], struct _nbLookupTableData DataList[], int TimestampSec, 
+	int AddTableEntry(long long TableID, struct _nbLookupTableKey KeyList[], struct _nbLookupTableData DataList[], int TimestampSec,
 						int KeysHaveMasks, nbNetPDLUpdateLookupTableAddValidityTypes_t 	Validity, int KeepTime, int HitTime, int NewHitTime);
-	int PurgeTableEntry(int TableID, struct _nbLookupTableKey KeyList[], int MaskedEntry, int TimestampSec);
-	int ObsoleteTableEntry(int TableID, struct _nbLookupTableKey KeyList[], int MaskedEntry, int TimestampSec);
+	int PurgeTableEntry(long long TableID, struct _nbLookupTableKey KeyList[], int MaskedEntry, int TimestampSec);
+	int ObsoleteTableEntry(long long TableID, struct _nbLookupTableKey KeyList[], int MaskedEntry, int TimestampSec);
 
-	int LookupForTableEntry(int TableID, struct _nbLookupTableKey KeyList[], int TimestampSec, int MatchExactEntries, int MatchMaskEntries, int GetFirstMatch);
-	int LookupAndUpdateTableEntry(int TableID, struct _nbLookupTableKey KeyList[], int TimestampSec);
-	int GetTableDataBuffer(int TableID, int DataID, unsigned int StartAt, unsigned int Size, unsigned char **DataValue, unsigned int *DataSize);
-	int GetTableDataNumber(int TableID, int DataID, unsigned int* DataValue);
-	int SetTableDataBuffer(int TableID, int DataID, unsigned char *DataValue, unsigned int StartingOffset, unsigned int DataSize);
-	int SetTableDataNumber(int TableID, int DataID, unsigned int DataValue);
+	int LookupForTableEntry(long long TableID, struct _nbLookupTableKey KeyList[], int TimestampSec, int MatchExactEntries, int MatchMaskEntries, int GetFirstMatch);
+	int LookupAndUpdateTableEntry(long long TableID, struct _nbLookupTableKey KeyList[], int TimestampSec);
+	int GetTableDataBuffer(long long TableID, long long DataID, unsigned long long StartAt, unsigned long long Size, unsigned char **DataValue, unsigned long long* DataSize);
+	int GetTableDataNumber(long long TableID, long long DataID, unsigned long long* DataValue);
+	int SetTableDataBuffer(long long TableID, long long DataID, unsigned char *DataValue, unsigned long long StartingOffset, unsigned long long DataSize);
+	int SetTableDataNumber(long long TableID, long long DataID, unsigned long long DataValue);
 
-	int GetTableFirstEntry(int TableID, int GetExactEntry, struct _nbLookupTableKey** KeyList, struct _nbLookupTableData** DataList);
-	int GetTableMatchingEntry(int TableID, struct _nbLookupTableKey** KeyList, struct _nbLookupTableData** DataList);
-	int GetTableNextMatchingEntry(int TableID, struct _nbLookupTableKey** KeyList, struct _nbLookupTableData** DataList);
+	int GetTableFirstEntry(long long TableID, int GetExactEntry, struct _nbLookupTableKey** KeyList, struct _nbLookupTableData** DataList);
+	int GetTableMatchingEntry(long long TableID, struct _nbLookupTableKey** KeyList, struct _nbLookupTableData** DataList);
+	int GetTableNextMatchingEntry(long long TableID, struct _nbLookupTableKey** KeyList, struct _nbLookupTableData** DataList);
 
-	int ScanTableEntries(int TableID, int ScanExactEntries, struct _nbLookupTableKey** KeyList, struct _nbLookupTableData** DataList, void** CurrentElementHandler);
+	int ScanTableEntries(long long TableID, int ScanExactEntries, struct _nbLookupTableKey** KeyList, struct _nbLookupTableData** DataList, void** CurrentElementHandler);
 
 	void DoGarbageCollection(int TimestampSec, int AggressiveScan);
 	char *GetLastError() { return m_errbuf; };
 
-	int GetNumberOfEntries(int TableID);
+	long long GetNumberOfEntries(long long TableID);
 
 
 
 private:
-	void MoveNewExactEntryOnTopOfList(int TableID);
-	void MoveExistingExactEntryOnTopOfList(int TableID, struct _TableEntry *MatchingEntry);
-	void PurgeExistingExactEntry(int TableID, struct _TableEntry *MatchingEntry);
-	void MoveNewMaskEntryOnTopOfList(int TableID);
-	void MoveExistingMaskEntryOnTopOfList(int TableID, struct _TableEntry *MatchingEntry);
-	void PurgeExistingMaskEntry(int TableID, struct _TableEntry *MatchingEntry);
+	void MoveNewExactEntryOnTopOfList(long long TableID);
+	void MoveExistingExactEntryOnTopOfList(long long TableID, struct _TableEntry *MatchingEntry);
+	void PurgeExistingExactEntry(long long TableID, struct _TableEntry *MatchingEntry);
+	void MoveNewMaskEntryOnTopOfList(long long TableID);
+	void MoveExistingMaskEntryOnTopOfList(long long TableID, struct _TableEntry *MatchingEntry);
+	void PurgeExistingMaskEntry(long long TableID, struct _TableEntry *MatchingEntry);
 	int AllocateEntries(int NumberOfEntries, int EntrySize, struct _TableEntry **FirstEntry);
 
-	int CheckAndDeleteIfOldExactEntry(int TableID, struct _TableEntry *CurrentEntry, int TimestampSec);
-	int CheckAndDeleteIfOldMaskEntry(int TableID, struct _TableEntry *CurrentEntry, int TimestampSec);
+	int CheckAndDeleteIfOldExactEntry(long long TableID, struct _TableEntry *CurrentEntry, int TimestampSec);
+	int CheckAndDeleteIfOldMaskEntry(long long TableID, struct _TableEntry *CurrentEntry, int TimestampSec);
 
 #ifdef LOOKUPTABLE_PROFILER
-	void UpdateProfilerCounters(int TableID, int IsExact, int Value);
-	void PrintTableStats(int TableID);
+	void UpdateProfilerCounters(long long TableID, int IsExact, int Value);
+	void PrintTableStats(long long TableID);
 #endif
 
 #ifdef DEBUG_LOOKUPTABLE
-	void PrintEntireTable(int TableID, int IsExact, int TimestampSec);
-	void PrintTableEntry(int TableID, struct _TableEntry *CurrentEntry, char* Message);
+	void PrintEntireTable(long long TableID, int IsExact, int TimestampSec);
+	void PrintTableEntry(long long TableID, struct _TableEntry *CurrentEntry, char* Message);
 #endif
 
 	int lookupExactCall;

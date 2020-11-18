@@ -4,6 +4,7 @@
 /*                                                                           */
 /*****************************************************************************/
 
+#include "../globals/debug.h"
 #include "nbeepacketengine.h"
 #include "nbeefieldreader.h"
 

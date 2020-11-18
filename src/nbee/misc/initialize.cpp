@@ -165,11 +165,11 @@ unsigned int ProtoIndex;
 		while(InitElement)
 		{
 		int RetVal;
-		unsigned int Result= 1;
+		unsigned long long Result= 1;
 
 			if (InitElement->WhenExprTree)
 			{
-				RetVal= ExprHandler->EvaluateExprNumber(InitElement->WhenExprTree, NULL, &Result);
+				RetVal = static_cast<long>(ExprHandler->EvaluateExprNumber(InitElement->WhenExprTree, NULL, &Result));
 
 				if (RetVal != nbSUCCESS)
 					return RetVal;
@@ -231,7 +231,7 @@ unsigned int ProtoIndex;
 			{
 			struct _nbNetPDLElementAssignVariable *AssignVariableElement;
 			int RetVal;
-			int VariableID;
+			long long VariableID;
 
 				AssignVariableElement= (struct _nbNetPDLElementAssignVariable*) NetPDLDatabase->GlobalElementsList[i];
 
@@ -248,7 +248,8 @@ unsigned int ProtoIndex;
 			case nbNETPDL_IDEL_ASSIGNLOOKUPTABLE:
 			{
 			struct _nbNetPDLElementAssignLookupTable *LookupTableElement;
-			int TableID, DataID;
+			long long TableID;
+			unsigned long long DataID;
 			int RetVal;
 
 				LookupTableElement= (struct _nbNetPDLElementAssignLookupTable*) NetPDLDatabase->GlobalElementsList[i];
@@ -268,7 +269,7 @@ unsigned int ProtoIndex;
 			case nbNETPDL_IDEL_UPDATELOOKUPTABLE:
 			{
 			struct _nbNetPDLElementUpdateLookupTable *LookupTableElement;
-			int TableID;
+			long long TableID;
 			int RetVal;
 
 				LookupTableElement= (struct _nbNetPDLElementUpdateLookupTable*) NetPDLDatabase->GlobalElementsList[i];
@@ -378,7 +379,7 @@ int RetVal;
 		case nbNETPDL_ID_EXPR_OPERAND_VARIABLE:
 		{
 		struct _nbNetPDLExprVariable* ExpressionVariable;
-		int VariableID;
+		long long VariableID;
 
 			ExpressionVariable= (struct _nbNetPDLExprVariable* ) Expression;
 
@@ -400,7 +401,8 @@ int RetVal;
 		case nbNETPDL_ID_EXPR_OPERAND_LOOKUPTABLE:
 		{
 		struct _nbNetPDLExprLookupTable* ExpressionLookupTable;
-		int TableID, DataID;
+		long long TableID;
+		unsigned long long DataID;
 
 			ExpressionLookupTable= (struct _nbNetPDLExprLookupTable* ) Expression;
 
@@ -506,7 +508,7 @@ int RetVal;
 		{
 		struct _nbNetPDLExprFunctionCheckUpdateLookupTable* ExpressionCheckLookupTable;
 		struct _nbParamsLinkedList* ParameterItem;
-		int TableID;
+		long long TableID;
 
 			ExpressionCheckLookupTable= (struct _nbNetPDLExprFunctionCheckUpdateLookupTable* ) Expression;
 

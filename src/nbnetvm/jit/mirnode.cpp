@@ -571,7 +571,7 @@ namespace jit {
 		return t;
 	}
 
-	uint32_t MIRNode::get_defined_count() {
+	size_t MIRNode::get_defined_count() {
 		return Get_Defined_Count(getOpcode()) == ONE_DEF ? 1 : 0;
 	}
 

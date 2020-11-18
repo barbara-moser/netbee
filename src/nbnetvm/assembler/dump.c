@@ -36,7 +36,7 @@
 
 OpCodeInfo OpCodeTable[256]=
 {
-	#include "../opcodestable.txt"
+	#include "opcodestable.txt"
 };
 
 

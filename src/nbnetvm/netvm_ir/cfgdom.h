@@ -84,7 +84,7 @@ namespace jit{
 			 * \param BB2 pointer to a basic block
 			 * \return true if BB1 comes before BB2 in post order number
 			 */
-		bool operator()(typename _CFG::BBType* BB1, typename _CFG::BBType* BB2)
+		bool operator()(typename _CFG::BBType* BB1, typename _CFG::BBType* BB2) const
 		{
 			return BB1->getId() < BB2->getId();
 		}

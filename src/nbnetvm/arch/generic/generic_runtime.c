@@ -282,6 +282,7 @@ return nvmSUCCESS;
 
 int32_t	genRT_OpenPhysIn(nvmPhysInterface *PhysInterface, char *errbuf)
 {
+#ifdef HAVE_PCAP
 	char * name;
 	pcap_t *descr;
 	name = PhysInterface->PhysInterfInfo->Name;
@@ -291,13 +292,15 @@ int32_t	genRT_OpenPhysIn(nvmPhysInterface *PhysInterface, char *errbuf)
 		exit (1);
 	}
 	PhysInterface->ArchData = descr;
-
+#endif
 	return nvmSUCCESS;
 }
 
 int32_t genRT_OutPhysicIn (nvmExchangeBuffer *exbuf, uint32_t port, nvmHandlerState *HandlerState)
 {
+#ifdef HAVE_PCAP
 		pcap_sendpacket(HandlerState->CtdInterf->ArchData,(u_char *)exbuf->PacketBuffer,(int) exbuf->PacketLen);
+#endif
 		return nvmSUCCESS;
 }
 

@@ -1,373 +1,288 @@
-PROJECT(nbnetvm)
-
-CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
-
 # definition of helpful directories
-SET(NETVM_BASE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
-#SET(TOOLS_OUT_DIR ${CMAKE_CURRENT_SOURCE_DIR}/tools/bin)
-SET(NETVM_SRC_DIR ${NETVM_BASE_DIR})
-SET(NETVM_COMMON_DIR ${NETVM_BASE_DIR}/netvm_ir)
-SET(NETVM_ASM_DIR ${NETVM_SRC_DIR}/assembler)
-SET(NETVM_JIT_DIR ${NETVM_SRC_DIR}/jit)
+set(NETVM_BASE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
+set(NETVM_SRC_DIR ${NETVM_BASE_DIR})
+set(NETVM_COMMON_DIR ${NETVM_BASE_DIR}/netvm_ir)
+set(NETVM_ASM_DIR ${NETVM_SRC_DIR}/assembler)
+set(NETVM_JIT_DIR ${NETVM_SRC_DIR}/jit)
+
+add_library(
+	nbnetvm
+	SHARED
+)
+
+set_target_properties(nbnetvm PROPERTIES
+	FOLDER "nbnetvm"
+)
+
+find_package(PCAP)
+
+target_compile_definitions(nbnetvm PRIVATE USE_JIT _JIT_BUILD $<$<BOOL:${PCAP_FOUND}>:HAVE_PCAP>)
 
 
 # MACOSX
-IF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-#	MESSAGE (STATUS "Mac OS X detected!")
-	SET (CMAKE_C_FLAGS "-fno-common")
-	SET (CMAKE_CXX_FLAGS "-fno-common")
-	ADD_DEFINITIONS(-D__APPLE__)
-ENDIF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-
-
-INCLUDE_DIRECTORIES(Assembler ${NETVM_BASE_DIR}/../../include ${NETVM_SRC_DIR} ${NETVM_BASE_DIR}/netvm_ir)
-
-#IF (LIBPCAP)
-#	MESSAGE(STATUS "Found Pcap library: ${LIBPCAP}")
-#	ADD_DEFINITIONS(-DHAVE_PCAP)
-#ENDIF (LIBPCAP)
-
-
-IF (WIN32)
-	INCLUDE_DIRECTORIES(${NETVM_BASE_DIR}/../../../WPdPack/Include)
-	INCLUDE_DIRECTORIES(${NETVM_BASE_DIR}/../../contrib/pcre70/include)
-	LINK_DIRECTORIES(${NETVM_BASE_DIR}/../../../WPdPack/Lib)
-	LINK_DIRECTORIES(${NETVM_BASE_DIR}/../../contrib/pcre70/lib)
-ELSE(WIN32)
-	FIND_PATH(PCRE_INCLUDE_DIR pcre.h
-  		/usr/local/include
-  		/usr/include
-  		/opt/local/include
-  		/opt/include
+if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+	target_compile_options(nbnetvm PRIVATE
+		"-fno-common"
 	)
+	target_compile_definitions(nbnetvm PRIVATE
+		__APPLE__
+	)
+endif(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 
-	IF(PCRE_INCLUDE_DIR)
-		FIND_LIBRARY(PCRE_LIBRARY
-		  NAMES
-		    pcre
-		    pcrecpp
-		  PATHS
-		    /usr/local/lib
-		    /usr/lib
-		    /lib
-		    /opt/local/lib
-		    /opt/lib
-		    ${PCRE_INCLUDE_DIR}/../lib
-		)
+target_include_directories(nbnetvm
+	PRIVATE
+		assembler
+		../../include
+		${CMAKE_CURRENT_SOURCE_DIR}
+		${CMAKE_CURRENT_BINARY_DIR}
+		netvm_ir
+		${NETVM_JIT_DIR}
+)
 
-
-		  IF(PCRE_LIBRARY)
-		    SET( PCRE_LIBRARIES ${PCRE_LIBRARY} )
-		    SET( PCRE_FOUND "YES" )
-		  ENDIF(PCRE_LIBRARY)
-	ENDIF(PCRE_INCLUDE_DIR)
-ENDIF (WIN32)
+if(WIN32)
+	include_directories(${NETVM_BASE_DIR}/../../../WPdPack/Include)
+	link_directories(${NETVM_BASE_DIR}/../../../WPdPack/Lib)
+endif()
 
 
 ###################################################################################
 #
 # OPTIONS for compilation
-#
 
 # Choose enabled backend
-OPTION(
+option(
 	ENABLE_X86_BACKEND
 	"Turn on the Intel x86 backend (32 bits) for NetVM"
 	OFF
 )
-OPTION(
+option(
 	ENABLE_X64_BACKEND
 	"Turn on the Intel x64 backend (64 bits) for NetVM"
 	OFF
 )
-OPTION(
+option(
 	ENABLE_X11_BACKEND
 	"Turn on the Xelerated x11 backend for NetVM"
 	OFF
 )
-OPTION(
+option(
 	ENABLE_OCTEON_BACKEND
 	"Turn on the Cavium Octeon backend for NetVM"
 	OFF
 )
-OPTION(
+option(
 	ENABLE_OCTEONC_BACKEND
 	"Turn on the Cavium Octeon backend for NetVM in C"
 	OFF
 )
 
-IF(ENABLE_X86_BACKEND)
-	ADD_DEFINITIONS(-DENABLE_X86_BACKEND)
-ENDIF(ENABLE_X86_BACKEND)
-IF(ENABLE_X64_BACKEND)
-	ADD_DEFINITIONS(-DENABLE_X64_BACKEND)
-ENDIF(ENABLE_X64_BACKEND)
-IF(ENABLE_X11_BACKEND)
-	ADD_DEFINITIONS(-DENABLE_X11_BACKEND)
-ENDIF(ENABLE_X11_BACKEND)
-IF(ENABLE_OCTEON_BACKEND)
-	ADD_DEFINITIONS(-DENABLE_OCTEON_BACKEND)
-ENDIF(ENABLE_OCTEON_BACKEND)
-IF(ENABLE_OCTEONC_BACKEND)
-	ADD_DEFINITIONS(-DENABLE_OCTEONC_BACKEND)
-ENDIF(ENABLE_OCTEONC_BACKEND)
-
 # Choose profiling options
-OPTION(
+option(
 	ENABLE_COMPILER_PROFILING
 	"Turn on printing of some informations about the compiler"
 	OFF
 )
 
-OPTION(
+option(
 	ENABLE_CODE_PROFILING
 	"Turn on the code that allows to measure the execution time of the NetVM code (jit or native code)"
 	OFF
 )
 
-OPTION(
+option(
 	ENABLE_COUNTERS_PROFILING
 	"Turn on COUNTERS PROFILING"
 	OFF
 )
 
-OPTION(
+option(
 	ENABLE_PROFILING_COUNTERS
 	"Enable RTE profiling counters"
 	OFF
 )
 
-OPTION(ENABLE_JIT_PROFILING
+option(ENABLE_JIT_PROFILING
 	"Enable profiling of the jit"
 	OFF
 )
 
-OPTION(ENABLE_CODEVERIFY_PROFILING
+option(ENABLE_CODEVERIFY_PROFILING
 	"Enable profiling of the code verification (in the interpreter)"
 	# Please remember that this code works only when the interpreter is used
 	OFF
 )
 
 # Enabling logging
-OPTION(
+option(
 	ENABLE_INTERNAL_LOGGING
 	"Turn on some additional logging (e.g., dump of the executed netil code) on file for debuging purposes"
 	OFF
 )
 
 
-IF(ENABLE_COMPILER_PROFILING)
-	ADD_DEFINITIONS(-DENABLE_COMPILER_PROFILING)
-	ADD_DEFINITIONS(-DENABLE_PROFILING)
-ENDIF(ENABLE_COMPILER_PROFILING)
+if(ENABLE_COMPILER_PROFILING)
+	target_compile_definitions(nbnetvm PRIVATE ENABLE_COMPILER_PROFILING ENABLE_PROFILING)
+endif(ENABLE_COMPILER_PROFILING)
 
-IF(ENABLE_CODE_PROFILING)
-	ADD_DEFINITIONS(-DCODE_PROFILING)
-	ADD_DEFINITIONS(-DENABLE_PROFILING)
-ENDIF(ENABLE_CODE_PROFILING)
+if(ENABLE_CODE_PROFILING)
+	target_compile_definitions(nbnetvm PRIVATE CODE_PROFILING ENABLE_PROFILING)
+endif(ENABLE_CODE_PROFILING)
 
-IF(ENABLE_COUNTERS_PROFILING)
-	ADD_DEFINITIONS(-DCODE_PROFILING)
-	ADD_DEFINITIONS(-DCOUNTERS_PROFILING)
-	ADD_DEFINITIONS(-DENABLE_PROFILING)
-ENDIF(ENABLE_COUNTERS_PROFILING)
+if(ENABLE_COUNTERS_PROFILING)
+	target_compile_definitions(nbnetvm PRIVATE CODE_PROFILING COUNTERS_PROFILING ENABLE_PROFILING)
+endif(ENABLE_COUNTERS_PROFILING)
 
-IF(ENABLE_PROFILING_COUNTERS)
-	ADD_DEFINITIONS(-DRTE_PROFILE_COUNTERS)
-	ADD_DEFINITIONS(-DENABLE_PROFILING)
-ENDIF(ENABLE_PROFILING_COUNTERS)
+if(ENABLE_PROFILING_COUNTERS)
+	target_compile_definitions(nbnetvm PRIVATE RTE_PROFILE_COUNTERS ENABLE_PROFILING)
+endif(ENABLE_PROFILING_COUNTERS)
 
-IF(ENABLE_DYNAMIC_PROFILING)
-	ADD_DEFINITIONS(-DRTE_DYNAMIC_PROFILE)
-	ADD_DEFINITIONS(-DENABLE_PROFILING)
-ENDIF(ENABLE_DYNAMIC_PROFILING)
+if(ENABLE_DYNAMIC_PROFILING)
+	target_compile_definitions(nbnetvm PRIVATE RTE_DYNAMIC_PROFILE ENABLE_PROFILING)
+endif(ENABLE_DYNAMIC_PROFILING)
 
-IF(ENABLE_JIT_PROFILING)
-	ADD_DEFINITIONS(-DJIT_RTE_PROFILE_COUNTERS)
-	ADD_DEFINITIONS(-DENABLE_PROFILING)
-ENDIF(ENABLE_JIT_PROFILING)
+if(ENABLE_JIT_PROFILING)
+	target_compile_definitions(nbnetvm PRIVATE JIT_RTE_PROFILE_COUNTERS ENABLE_PROFILING)
+endif(ENABLE_JIT_PROFILING)
 
-IF(ENABLE_CODEVERIFY_PROFILING)
-	ADD_DEFINITIONS(-DCODEVERIFY_PROFILING)
-	ADD_DEFINITIONS(-DENABLE_PROFILING)
-ENDIF(ENABLE_CODEVERIFY_PROFILING)
+if(ENABLE_CODEVERIFY_PROFILING)
+	target_compile_definitions(nbnetvm PRIVATE CODEVERIFY_PROFILING ENABLE_PROFILING)
+endif(ENABLE_CODEVERIFY_PROFILING)
 
-IF(ENABLE_INTERNAL_LOGGING)
-	ADD_DEFINITIONS(-DENABLE_NETVM_LOGGING)
-ENDIF(ENABLE_INTERNAL_LOGGING)
-
+if(ENABLE_INTERNAL_LOGGING)
+	target_compile_definitions(nbnetvm PRIVATE ENABLE_NETVM_LOGGING)
+endif(ENABLE_INTERNAL_LOGGING)
 
 # Choose debug options
-OPTION(
+option(
 	_DEBUG_JIT_IF
 	"Turns on jit interface debugging"
 	OFF
 )
-IF(_DEBUG_JIT_IF)
-	ADD_DEFINITIONS(-D_DEBUG_JIT_IF)
-ENDIF(_DEBUG_JIT_IF)
 
-OPTION(
+option(
 	_DEBUG_CFG_BUILD
 	"Turns on cfg building debugging"
 	OFF
 )
-IF(_DEBUG_CFG_BUILD)
-	ADD_DEFINITIONS(-D_DEBUG_CFG_BUILD)
-ENDIF(_DEBUG_CFG_BUILD)
 
-OPTION(
+option(
 	_DEBUG_SSA
 	"turns on ssa debugging"
 	OFF
-	)
-IF(_DEBUG_SSA)
-	ADD_DEFINITIONS(-D_DEBUG_SSA)
-ENDIF(_DEBUG_SSA)
+)
 
-OPTION(
+option(
 	_DEBUG_BCHECK
 	"turns on bcheck remove debugging"
 	OFF
-	)
-IF(_DEBUG_BCHECK)
-	ADD_DEFINITIONS(-D_DEBUG_BCHECK)
-ENDIF(_DEBUG_BCHECK)
+)
 
-OPTION(
+option(
 	_DEBUG_SWITCH_LOWERING
 	"turns on switch lowering debugging"
 	OFF
-	)
-IF(_DEBUG_SWITCH_LOWERING)
-	ADD_DEFINITIONS(-D_DEBUG_SWITCH_LOWERING)
-ENDIF(_DEBUG_SWITCH_LOWERING)
+)
 
-OPTION(
+option(
 	_DEBUG_LIVENESS
 	"turns on livness debugging"
 	OFF
-	)
-IF(_DEBUG_LIVENESS)
-	ADD_DEFINITIONS(-D_DEBUG_LIVENESS)
-ENDIF(_DEBUG_LIVENESS)
+)
 
-OPTION(
+option(
 	_DEBUG_REG_ALLOC
 	"turns on register allocation debugging"
 	OFF
-	)
-IF(_DEBUG_REG_ALLOC)
-	ADD_DEFINITIONS(-D_DEBUG_REG_ALLOC)
-ENDIF(_DEBUG_REG_ALLOC)
+)
 
-OPTION(
+option(
 	_DEBUG_OPTIMIZER
 	"turns on optimizer debugging"
 	OFF
-	)
-IF(_DEBUG_OPTIMIZER)
-	ADD_DEFINITIONS(-D_DEBUG_OPTIMIZER)
-ENDIF(_DEBUG_OPTIMIZER)
+)
 
-OPTION(
+option(
 	_DEBUG_ALGEBRAIC_SIMPLIFICATION
 	"turns on algebraic simplification debugging"
 	OFF
-	)
-IF(_DEBUG_ALGEBRAIC_SIMPLIFICATION)
-	ADD_DEFINITIONS(-D_DEBUG_ALGEBRAIC_SIMPLIFICATION)
-ENDIF(_DEBUG_ALGEBRAIC_SIMPLIFICATION)
+)
 
-OPTION(
+option(
 	_DEBUG_DEAD_CODE_ELIMINATION
 	"turns on dead code elimination debugging"
 	OFF
-	)
-IF(_DEBUG_DEAD_CODE_ELIMINATION)
-	ADD_DEFINITIONS(-D_DEBUG_DEAD_CODE_ELIMINATION)
-ENDIF(_DEBUG_DEAD_CODE_ELIMINATION)
+)
 
-OPTION(
+option(
 	_DEBUG_CONTROL_FLOW_SIMPLIFICATION	
 	"turns on control flow simplification debugging"
 	OFF
-	)
-IF(_DEBUG_CONTROL_FLOW_SIMPLIFICATION)
-	ADD_DEFINITIONS(-D_DEBUG_CONTROL_FLOW_SIMPLIFICATION)
-ENDIF(_DEBUG_CONTROL_FLOW_SIMPLIFICATION)
+)
 
-OPTION(
+option(
 	_DEBUG_REDISTRIBUTION
 	"turns on redistribution debugging"
 	OFF
-	)
-IF(_DEBUG_REDISTRIBUTION)
-	ADD_DEFINITIONS(-D_DEBUG_REDISTRIBUTION)
-ENDIF(_DEBUG_REDISTRIBUTION)
+)
 
-
-OPTION(
+option(
 	_DEBUG_CONSTANT_PROPAGATION
 	"turns on constant propagation debugging"
 	OFF
-	)
-IF(_DEBUG_CONSTANT_PROPAGATION)
-	ADD_DEFINITIONS(-D_DEBUG_CONSTANT_PROPAGATION)
-ENDIF(_DEBUG_CONSTANT_PROPAGATION)
+)
 
-OPTION(
+option(
 	_DEBUG_REASS
 	"turns on optimizer debugging"
 	OFF
-	)
-IF(_DEBUG_REASS)
-	ADD_DEFINITIONS(-D_DEBUG_REASS)
-ENDIF(_DEBUG_REASS)
+)
 
-OPTION(
+option(
 	_DEBUG_SPILL
 	"Turns on Spill debugging"
 	OFF
-	)
-IF(_DEBUG_SPILL)
-	ADD_DEFINITIONS(-D_DEBUG_SPILL)
-ENDIF(_DEBUG_SPILL)
+)
 
-
-OPTION(
+option(
 	_DEBUG_COMMON_BACKEND
 	"Turns on the common backend debug"
 	OFF
-	)
-IF(_DEBUG_COMMON_BACKEND)
-	ADD_DEFINITIONS(-D_DEBUG_COMMON_BACKEND)
-ENDIF(_DEBUG_COMMON_BACKEND)
+)
 
-OPTION(
+option(
 	_DEBUG_X64_BACKEND
 	"Turns on x64 backend debug"
 	OFF
-	)
-IF(_DEBUG_X64_BACKEND)
-	ADD_DEFINITIONS(-D_DEBUG_X64_BACKEND)
-ENDIF(_DEBUG_X64_BACKEND)
+)
 
-OPTION(
+option(
 	_DEBUG_OPTIMIZATION_ALGORITHMS
 	"Turns on the optimization algorithms debug"
 	OFF
-	)
-IF(_DEBUG_OPTIMIZATION_ALGORITHMS)
-	ADD_DEFINITIONS(-D_DEBUG_OPTIMIZATION_ALGORITHMS)
-ENDIF(_DEBUG_OPTIMIZATION_ALGORITHMS)
+)
 
-INCLUDE_DIRECTORIES(${NETVM_JIT_DIR})
-ADD_DEFINITIONS(-DUSE_JIT)
-ADD_DEFINITIONS(-D_JIT_BUILD)
+target_compile_definitions(nbnetvm PRIVATE
+	$<$<BOOL:${_DEBUG_JIT_IF}>:_DEBUG_JIT_IF>
+	$<$<BOOL:${_DEBUG_CFG_BUILD}>:_DEBUG_CFG_BUILD>
+	$<$<BOOL:${_DEBUG_SSA}>:_DEBUG_SSA>
+	$<$<BOOL:${_DEBUG_BCHECK}>:_DEBUG_BCHECK>
+	$<$<BOOL:${_DEBUG_SWITCH_LOWERING}>:_DEBUG_SWITCH_LOWERING>
+	$<$<BOOL:${_DEBUG_LIVENESS}>:_DEBUG_LIVENESS>
+	$<$<BOOL:${_DEBUG_REG_ALLOC}>:_DEBUG_REG_ALLOC>
+	$<$<BOOL:${_DEBUG_OPTIMIZER}>:_DEBUG_OPTIMIZER>
+	$<$<BOOL:${_DEBUG_ALGEBRAIC_SIMPLIFICATION}>:_DEBUG_ALGEBRAIC_SIMPLIFICATION>
+	$<$<BOOL:${_DEBUG_DEAD_CODE_ELIMINATION}>:_DEBUG_DEAD_CODE_ELIMINATION>
+	$<$<BOOL:${_DEBUG_CONTROL_FLOW_SIMPLIFICATION}>:_DEBUG_CONTROL_FLOW_SIMPLIFICATION>
+	$<$<BOOL:${_DEBUG_REDISTRIBUTION}>:_DEBUG_REDISTRIBUTION>
+	$<$<BOOL:${_DEBUG_CONSTANT_PROPAGATION}>:_DEBUG_CONSTANT_PROPAGATION>
+	$<$<BOOL:${_DEBUG_REASS}>:_DEBUG_REASS>
+	$<$<BOOL:${_DEBUG_SPILL}>:_DEBUG_SPILL>
+	$<$<BOOL:${_DEBUG_COMMON_BACKEND}>:_DEBUG_COMMON_BACKEND>
+	$<$<BOOL:${_DEBUG_X64_BACKEND}>:_DEBUG_X64_BACKEND>
+	$<$<BOOL:${_DEBUG_OPTIMIZATION_ALGORITHMS}>:_DEBUG_OPTIMIZATION_ALGORITHMS>
+)
 
-
-MARK_AS_ADVANCED(
+mark_as_advanced(
 	_DEBUG_CFG_BUILD 
 	_DEBUG_SPILL 
 	_DEBUG_REG_ALLOC 
@@ -385,49 +300,86 @@ MARK_AS_ADVANCED(
 	_DEBUG_SWITCH_LOWERING
 )
 
+add_subdirectory(${NETVM_BASE_DIR}/tools/makenetilscanner)
+add_subdirectory(${NETVM_BASE_DIR}/tools/makeopcodetable)
+add_subdirectory(${NETVM_BASE_DIR}/tools/netvmburg)
+
+set(scanner_prefix nvmparser_)
+
+###############################################################################
+#
+# code generation
+#
+
+add_custom_command(
+	OUTPUT
+	${CMAKE_CURRENT_BINARY_DIR}/opcodestable.txt
+	COMMAND makeopcodetable "../../opcodes.txt" 1> "${CMAKE_CURRENT_BINARY_DIR}/opcodestable.txt"
+	DEPENDS
+	${NETVM_SRC_DIR}/opcodes.txt makeopcodetable
+	WORKING_DIRECTORY "${NETVM_BASE_DIR}/tools/bin"
+	)
+
+add_custom_command(
+	OUTPUT
+	${CMAKE_CURRENT_BINARY_DIR}/nvm_gramm.tab.c
+	${CMAKE_CURRENT_BINARY_DIR}/nvm_gramm.tab.h
+	COMMAND win_bison -bgramm --defines=${CMAKE_CURRENT_BINARY_DIR}/nvm_gramm.tab.h -p "${scanner_prefix}" "../../assembler/nvm_gramm.y" -o "${CMAKE_CURRENT_BINARY_DIR}/nvm_gramm.tab.c"
+	DEPENDS ${NETVM_ASM_DIR}/nvm_gramm.y
+	WORKING_DIRECTORY "${NETVM_BASE_DIR}/tools/bin"
+	)
+
+add_custom_command(
+	OUTPUT
+	${CMAKE_CURRENT_BINARY_DIR}/scanner.l
+	${CMAKE_CURRENT_BINARY_DIR}/scanner.c
+
+	COMMAND makenetilscanner "../../opcodes.txt" "../../assembler/scanner-template.l" > "${CMAKE_CURRENT_BINARY_DIR}/scanner.l"
+
+	COMMAND win_flex -P${scanner_prefix} -i -o"${CMAKE_CURRENT_BINARY_DIR}/scanner.c" "${CMAKE_CURRENT_BINARY_DIR}/scanner.l"
+	DEPENDS makenetilscanner
+	${NETVM_ASM_DIR}/scanner-template.l
+	${NETVM_SRC_DIR}/opcodes.txt
+	WORKING_DIRECTORY "${NETVM_BASE_DIR}/tools/bin"
+	)
+
 #####################################################################################
 #
 # Coprocessors
 #
 
 # 3 for lookup, one for regex, one for string matching
-SET(AVAILABLE_COPROS_NO 5)
-
+set(AVAILABLE_COPROS_NO 5)
 
 ####################################################################################
 #
 # String matching
 #
 
-SET(NETVM_SRCS ${NETVM_SRCS} 
+target_sources(nbnetvm PRIVATE
 	${NETVM_SRC_DIR}/arch/generic/coprocessors/stringmatching.c
 	${NETVM_SRC_DIR}/arch/generic/coprocessors/acsmx2.c
 	${NETVM_SRC_DIR}/arch/generic/coprocessors/acsmx2.h
 )
-
-
 
 ########################################################################
 #
 # Regexp
 #
 
-SET(NETVM_SRCS ${NETVM_SRCS} 
+target_sources(nbnetvm PRIVATE
 	${NETVM_SRC_DIR}/arch/generic/coprocessors/regexp.c
 )
-
-
-
 
 #################################################################################
 #
 # files for all runtime backend
 #
 
-SET(NETVM_SRCS ${NETVM_SRCS}
+target_sources(nbnetvm PRIVATE
 	${NETVM_SRC_DIR}/assembler/dump.c
-	${NETVM_SRC_DIR}/assembler/scanner.c
-	${NETVM_SRC_DIR}/assembler/nvm_gramm.tab.c
+	${CMAKE_CURRENT_BINARY_DIR}/scanner.c
+	${CMAKE_CURRENT_BINARY_DIR}/nvm_gramm.tab.c
 	${NETVM_SRC_DIR}/assembler/netil_assembler.c
 	${NETVM_SRC_DIR}/assembler/hashtable.c
 	${NETVM_SRC_DIR}/helpers.c
@@ -444,7 +396,7 @@ SET(NETVM_SRCS ${NETVM_SRCS}
 	${NETVM_ASM_DIR}/nvm_gramm.y
 	${NETVM_ASM_DIR}/scanner-template.l
 # The following is dynamically generated from the scanner-template.l above
-#	${NETVM_ASM_DIR}/scanner.l
+#	${CMAKE_CURRENT_BINARY_DIR}/scanner.l
 # Files for profiling
 	${NETVM_SRC_DIR}/netvmprofiling.cpp
 	${NETVM_SRC_DIR}/../nbee/globals/profiling-functions.c
@@ -455,10 +407,10 @@ SET(NETVM_SRCS ${NETVM_SRCS}
 #Opcode tables
 	${NETVM_SRC_DIR}/opcodes.txt
 	${NETVM_SRC_DIR}/newopcodes.txt
-	${NETVM_SRC_DIR}/opcodestable.txt
+	${CMAKE_CURRENT_BINARY_DIR}/opcodestable.txt
 	)
 
-SET(NETVM_HDRS
+target_sources(nbnetvm PRIVATE
 	${NETVM_SRC_DIR}/../../include/nbnetvm.h
 	${NETVM_SRC_DIR}/helpers.h
 	${NETVM_SRC_DIR}/netvm_bytecode.h
@@ -478,14 +430,12 @@ SET(NETVM_HDRS
 	${NETVM_BASE_DIR}/../nbee/globals/debug.h
 	)
 
-
-
 #################################################################################
 #
 # files for generic runtime backend
 #
 
-SET(NETVM_SRCS ${NETVM_SRCS}
+target_sources(nbnetvm PRIVATE
 	${NETVM_SRC_DIR}/arch/generic/generic_runtime.c
 	${NETVM_SRC_DIR}/arch/generic/generic_interpreter.c
 	${NETVM_SRC_DIR}/arch/generic/coprocessors/coprocessors_main.c
@@ -516,7 +466,7 @@ SET(NETVM_SRCS ${NETVM_SRCS}
 	${NETVM_JIT_DIR}/opt/optimizer_statistics.cpp
 )
 
-SET(NETVM_HDRS ${NETVM_HDRS}
+target_sources(nbnetvm PRIVATE
 	${NETVM_SRC_DIR}/arch/generic/arch.h
 	${NETVM_SRC_DIR}/arch/generic/generic_runtime.h
 	${NETVM_SRC_DIR}/arch/generic/generic_interpreter.h
@@ -573,18 +523,6 @@ SET(NETVM_HDRS ${NETVM_HDRS}
 	${NETVM_ASM_DIR}/compiler.h
 )
 
-ADD_DEFINITIONS(-DHAVE_PCAP)
-
-SET_SOURCE_FILES_PROPERTIES(
-	${NETVM_ASM_DIR}/scanner.l
-	${NETVM_ASM_DIR}/scanner.c
-	${NETVM_ASM_DIR}/nvm_gramm.tab.c
-	${NETVM_ASM_DIR}/nvm_gramm.tab.h
-	${NETVM_SRC_DIR}/opcodestable.txt
-	PROPERTIES GENERATED true
-)
-
-
 ###########################################################################################
 #
 # file for compilers backends with generic runtime
@@ -594,41 +532,39 @@ SET_SOURCE_FILES_PROPERTIES(
 # IA32
 #
 
-IF(ENABLE_X86_BACKEND)
-	SET(X86DIS_SRC_DIR ${NETVM_JIT_DIR}/x86_x64_disasm )
-	SET(NETVM_SRCS ${NETVM_SRCS}
+if(ENABLE_X86_BACKEND)
+	target_compile_definitions(nbnetvm PRIVATE ENABLE_X86_BACKEND)
+	set(X86DIS_SRC_DIR ${NETVM_JIT_DIR}/x86_x64_disasm )
+	add_custom_command(
+		OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/ia32/inssel-ia32.cpp
+		${CMAKE_CURRENT_BINARY_DIR}/ia32/inssel-ia32.h
+		COMMAND ${CMAKE__COMMAND} -E make_directory ${CMAKE_CURRENT_BINARY_DIR}/ia32
+		COMMAND netvmburg
+		ARGS
+		#comment the following line to disable constant swapping
+		-DSWAP_CONST
+		-C IA32InsSelector -p -d ${CMAKE_CURRENT_BINARY_DIR}/ia32/inssel-ia32.h ../../jit/ia32/inssel-ia32.brg > ${CMAKE_CURRENT_BINARY_DIR}/ia32/inssel-ia32.cpp
+		DEPENDS netvmburg
+		${NETVM_JIT_DIR}/ia32/inssel-ia32.brg
+		WORKING_DIRECTORY "${NETVM_BASE_DIR}/tools/bin"
+		)
+
+	target_sources(nbnetvm PRIVATE
 		${NETVM_JIT_DIR}/ia32/x86-asm.cpp
 		${NETVM_JIT_DIR}/ia32/x86-emit.cpp
 		${NETVM_JIT_DIR}/ia32/x86-backend.cpp
-		${NETVM_JIT_DIR}/ia32/inssel-ia32.cpp
+		${CMAKE_CURRENT_BINARY_DIR}/ia32/inssel-ia32.cpp
 		${NETVM_JIT_DIR}/ia32/x86-regalloc.cpp
 		${NETVM_JIT_DIR}/ia32/x86_switch_lowering.cpp
 		${NETVM_JIT_DIR}/ia32/x86_counters.cpp
 		${NETVM_JIT_DIR}/ia32/inssel-ia32.brg
-	)
-	
-	SET(NETVM_HDRS ${NETVM_HDRS}
 		${NETVM_JIT_DIR}/ia32/x86-asm.h
 		${NETVM_JIT_DIR}/ia32/x86-backend.h
 		${NETVM_JIT_DIR}/ia32/x86-emit.h
-		${NETVM_JIT_DIR}/ia32/inssel-ia32.h
+		${CMAKE_CURRENT_BINARY_DIR}/ia32/inssel-ia32.h
 		${NETVM_JIT_DIR}/ia32/x86-regalloc.h
 		${NETVM_JIT_DIR}/ia32/x86_switch_lowering.h
 		${NETVM_JIT_DIR}/ia32/x86_counters.h
-	)
-	
-	
-	# Set x86 disassembler source files
-	SET(X86DIS_SRCS
-		#${X86DIS_SRC_DIR}/decode.c
-		#${X86DIS_SRC_DIR}/input.c
-		#${X86DIS_SRC_DIR}/mnemonics.c
-		#${X86DIS_SRC_DIR}/opcmap.c
-		#${X86DIS_SRC_DIR}/syn-att.c
-		#${X86DIS_SRC_DIR}/syn-intel.c
-		#${X86DIS_SRC_DIR}/syn.c
-		#${X86DIS_SRC_DIR}/udis86.c
-		
 		${X86DIS_SRC_DIR}/decode.c
 		${X86DIS_SRC_DIR}/input.c
 		${X86DIS_SRC_DIR}/itab.c
@@ -636,17 +572,6 @@ IF(ENABLE_X86_BACKEND)
 		${X86DIS_SRC_DIR}/syn-att.c
 		${X86DIS_SRC_DIR}/syn-intel.c
 		${X86DIS_SRC_DIR}/udis86.c
-	)
-	 
-	SET(X86DIS_HDRS
-		#${X86DIS_SRC_DIR}/extern.h
-		#${X86DIS_SRC_DIR}/input.h
-		#${X86DIS_SRC_DIR}/mnemonics.h
-		#${X86DIS_SRC_DIR}/opcmap.h
-		#${X86DIS_SRC_DIR}/syn.h
-		#${X86DIS_SRC_DIR}/dis_types.h
-		#${X86DIS_SRC_DIR}/udis86.h
-		
 		${X86DIS_SRC_DIR}/decode.h
 		${X86DIS_SRC_DIR}/extern.h
 		${X86DIS_SRC_DIR}/input.h
@@ -656,38 +581,38 @@ IF(ENABLE_X86_BACKEND)
 		${X86DIS_SRC_DIR}/udis86.h
 	)
 
-	SET(NETVM_SRCS ${NETVM_SRCS}
-		${X86DIS_SRCS})
-		
-	SET(NETVM_HDRS ${NETVM_HDRS}
-		${X86DIS_HDRS})
-		
-	
-	INCLUDE_DIRECTORIES(${NETVM_JIT_DIR}/ia32 ${X86DIS_SRC_DIR} )
-	SET_SOURCE_FILES_PROPERTIES(
-		${NETVM_JIT_DIR}/ia32/inssel-ia32.cpp
-		${NETVM_JIT_DIR}/ia32/inssel-ia32.h
-		PROPERTIES GENERATED true)
-ENDIF(ENABLE_X86_BACKEND)
-
+	target_include_directories(nbnetvm PRIVATE
+		${NETVM_JIT_DIR}/ia32
+		${X86DIS_SRC_DIR}
+		${CMAKE_CURRENT_BINARY_DIR}/ia32
+	)
+endif()
 #
 # X11
 #
-IF(ENABLE_X11_BACKEND)
-	SET(NETVM_SRCS ${NETVM_SRCS}
+if(ENABLE_X11_BACKEND)
+	target_compile_definitions(nbnetvm PRIVATE ENABLE_X11_BACKEND)
+	add_custom_command(
+		OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/x11/inssel-x11.cpp
+		${CMAKE_CURRENT_BINARY_DIR}/x11/inssel-x11.h
+		COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_CURRENT_BINARY_DIR}/x11
+		COMMAND netvmburg ARGS -C X11InsSelector -p -d ${CMAKE_CURRENT_BINARY_DIR}/x11/inssel-x11.h ../../jit/x11/inssel-x11.brg > ${CMAKE_CURRENT_BINARY_DIR}/x11/inssel-x11.cpp
+		DEPENDS netvmburg
+		${NETVM_JIT_DIR}/x11/inssel-x11.brg
+		WORKING_DIRECTORY "${NETVM_BASE_DIR}/tools/bin"
+	)
+
+	target_sources(nbnetvm PRIVATE
 		${NETVM_JIT_DIR}/x11/x11-ir.cpp
 		${NETVM_JIT_DIR}/x11/x11-backend.cpp
 		${NETVM_JIT_DIR}/x11/x11-emit.cpp
 		${NETVM_JIT_DIR}/x11/x11-util.cpp
 		${NETVM_JIT_DIR}/x11/x11-optimization.cpp
 		${NETVM_JIT_DIR}/x11/x11-coprocessor.cpp
-		${NETVM_JIT_DIR}/x11/inssel-x11.cpp
+		${CMAKE_CURRENT_BINARY_DIR}/x11/inssel-x11.cpp
 		${NETVM_JIT_DIR}/x11/inssel-x11.brg
-	)
-
-	SET(NETVM_HDRS ${NETVM_HDRS}
 		${NETVM_JIT_DIR}/x11/x11-ir.h
-		${NETVM_JIT_DIR}/x11/inssel-x11.h
+		${CMAKE_CURRENT_BINARY_DIR}/x11/inssel-x11.h
 		${NETVM_JIT_DIR}/x11/x11-ir.h
 		${NETVM_JIT_DIR}/x11/x11-emit.h
 		${NETVM_JIT_DIR}/x11/x11-optimization.h
@@ -696,127 +621,128 @@ IF(ENABLE_X11_BACKEND)
 		${NETVM_JIT_DIR}/x11/x11-backend.h
 	)
 
-	INCLUDE_DIRECTORIES(${NETVM_JIT_DIR}/x11)
-
-	SET_SOURCE_FILES_PROPERTIES(
-		${NETVM_JIT_DIR}/x11/inssel-x11.cpp
-		${NETVM_JIT_DIR}/x11/inssel-x11.h
-		PROPERTIES GENERATED true
-	)
-ENDIF(ENABLE_X11_BACKEND)
+	target_include_directories(nbnetvm PRIVATE ${NETVM_JIT_DIR}/x11 ${CMAKE_CURRENT_BINARY_DIR}/x11)
+endif()
 
 #
 # octeon
 #
-IF(ENABLE_OCTEON_BACKEND)
-	SET(NETVM_SRCS ${NETVM_SRCS}
+if(ENABLE_OCTEON_BACKEND)
+	target_compile_definitions(nbnetvm PRIVATE ENABLE_OCTEON_BACKEND)
+	add_custom_command(
+		OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/octeon/inssel-octeon.cpp
+		${CMAKE_CURRENT_BINARY_DIR}/octeon/inssel-octeon.h
+		COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_CURRENT_BINARY_DIR}/octeon
+		COMMAND netvmburg ARGS -C OcteonInsSelector -p -d ${CMAKE_CURRENT_BINARY_DIR}/octeon/inssel-octeon.h ../../jit/octeon/inssel-octeon.brg > ${CMAKE_CURRENT_BINARY_DIR}/octeon/inssel-octeon.cpp
+		DEPENDS netvmburg
+		${NETVM_JIT_DIR}/octeon/inssel-octeon.brg
+		WORKING_DIRECTORY "${NETVM_BASE_DIR}/tools/bin"
+	)
+    
+	target_sources(nbnetvm PRIVATE
 		${NETVM_JIT_DIR}/octeon/octeon-asm.cpp
 		${NETVM_JIT_DIR}/octeon/octeon-asm.inl
 		${NETVM_JIT_DIR}/octeon/octeon-backend.cpp
 		${NETVM_JIT_DIR}/octeon/octeon-regalloc.cpp
 		${NETVM_JIT_DIR}/octeon/octeon-offset.cpp
 		${NETVM_JIT_DIR}/octeon/octeon-emit.cpp
-		${NETVM_JIT_DIR}/octeon/inssel-octeon.cpp
+		${CMAKE_CURRENT_BINARY_DIR}/octeon/inssel-octeon.cpp
 		${NETVM_JIT_DIR}/octeon/octeon-coprocessor.cpp
 		${NETVM_JIT_DIR}/octeon/octeon-switch.cpp
 		${NETVM_JIT_DIR}/octeon/inssel-octeon.brg
-	)
-
-	SET(NETVM_HDRS ${NETVM_HDRS}
 		${NETVM_JIT_DIR}/octeon/octeon-asm.h
 		${NETVM_JIT_DIR}/octeon/octeon-backend.h
 		${NETVM_JIT_DIR}/octeon/octeon-regalloc.h
 		${NETVM_JIT_DIR}/octeon/octeon-offset.h
 		${NETVM_JIT_DIR}/octeon/octeon-emit.h
-		${NETVM_JIT_DIR}/octeon/inssel-octeon.h
+		${CMAKE_CURRENT_BINARY_DIR}/octeon/inssel-octeon.h
 		${NETVM_JIT_DIR}/octeon/octeon-coprocessor.h
 		${NETVM_JIT_DIR}/octeon/octeon-switch.h
 	)
 
-	INCLUDE_DIRECTORIES(${NETVM_JIT_DIR}/octeon)
-
-	SET_SOURCE_FILES_PROPERTIES(
-		${NETVM_JIT_DIR}/octeon/inssel-octeon.cpp
-		${NETVM_JIT_DIR}/octeon/inssel-octeon.h
-		PROPERTIES GENERATED true
-	)
-ENDIF(ENABLE_OCTEON_BACKEND)
+	target_include_directories(nbnetvm PRIVATE ${NETVM_JIT_DIR}/octeon ${CMAKE_CURRENT_BINARY_DIR}/octeon)
+endif()
 
 #
 # octeon-c
 #
+if(ENABLE_OCTEONC_BACKEND)
+	target_compile_definitions(nbnetvm PRIVATE ENABLE_OCTEONC_BACKEND)
+	add_custom_command(
+		OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/octeonc/inssel-octeonc.cpp
+		${CMAKE_CURRENT_BINARY_DIR}/octeonc/inssel-octeonc.h
+		COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_CURRENT_BINARY_DIR}/octeonc
+		COMMAND netvmburg ARGS -C OcteoncInsSelector -p -d
+		${CMAKE_CURRENT_BINARY_DIR}/octeonc/inssel-octeonc.h ../../jit/octeonc/inssel-octeonc.brg >
+		${CMAKE_CURRENT_BINARY_DIR}/octeonc/inssel-octeonc.cpp
+		DEPENDS netvmburg
+		${NETVM_JIT_DIR}/octeonc/inssel-octeonc.brg
+		WORKING_DIRECTORY "${NETVM_BASE_DIR}/tools/bin"
+		)
 
-IF(ENABLE_OCTEONC_BACKEND)
-	SET(NETVM_SRCS ${NETVM_SRCS}
+	target_sources(nbnetvm PRIVATE
 		${NETVM_JIT_DIR}/octeonc/octeonc-asm.cpp
 		${NETVM_JIT_DIR}/octeonc/octeonc-asm.inl
 		${NETVM_JIT_DIR}/octeonc/octeonc-backend.cpp
 		${NETVM_JIT_DIR}/octeonc/octeonc-emit.cpp
-		${NETVM_JIT_DIR}/octeonc/inssel-octeonc.cpp
+		${CMAKE_CURRENT_BINARY_DIR}/octeonc/inssel-octeonc.cpp
 		${NETVM_JIT_DIR}/octeonc/inssel-octeonc.brg
 		### the next one is from octeon
 		${NETVM_JIT_DIR}/octeon/octeon-coprocessor.cpp
-	)
-
-	SET(NETVM_HDRS ${NETVM_HDRS}
 		${NETVM_JIT_DIR}/octeonc/octeonc-asm.inl
 		${NETVM_JIT_DIR}/octeonc/octeonc-asm.h
 		${NETVM_JIT_DIR}/octeonc/octeonc-backend.h
 		${NETVM_JIT_DIR}/octeonc/octeonc-emit.h
-		${NETVM_JIT_DIR}/octeonc/inssel-octeonc.h
+		${CMAKE_CURRENT_BINARY_DIR}/octeonc/inssel-octeonc.h
 		### the next one is from octeon
 		${NETVM_JIT_DIR}/octeon/octeon-coprocessor.h
 	)
 
-	INCLUDE_DIRECTORIES(${NETVM_JIT_DIR}/octeonc)
-	INCLUDE_DIRECTORIES(${NETVM_JIT_DIR}/octeon)
-
-	SET_SOURCE_FILES_PROPERTIES(
-		${NETVM_JIT_DIR}/octeonc/inssel-octeonc.cpp
-		${NETVM_JIT_DIR}/octeonc/inssel-octeonc.h
-		PROPERTIES GENERATED true
-		)
-ENDIF(ENABLE_OCTEONC_BACKEND)
+	target_include_directories(nbnetvm PRIVATE
+		${NETVM_JIT_DIR}/octeonc
+		${NETVM_JIT_DIR}/octeon
+		${CMAKE_CURRENT_BINARY_DIR}/octeonc
+	)
+endif()
 
 #
 # X64
 #
-IF(ENABLE_X64_BACKEND)
-	SET(X86DIS_SRC_DIR ${NETVM_JIT_DIR}/x86_x64_disasm )
-	SET(NETVM_SRCS ${NETVM_SRCS}
+if(ENABLE_X64_BACKEND)
+	target_compile_definitions(nbnetvm PRIVATE ENABLE_X64_BACKEND)
+	set(X86DIS_SRC_DIR ${NETVM_JIT_DIR}/x86_x64_disasm )
+	add_custom_command(
+		OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/x64/inssel-x64.cpp
+		${CMAKE_CURRENT_BINARY_DIR}/x64/inssel-x64.h
+		COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_CURRENT_BINARY_DIR}/x64
+		COMMAND netvmburg
+		ARGS
+		#comment the following line to disable constant swapping
+		-DSWAP_CONST
+		-C X64InsSelector -p -d ${CMAKE_CURRENT_BINARY_DIR}/x64/inssel-x64.h ../../jit/x64/inssel-x64.brg > ${CMAKE_CURRENT_BINARY_DIR}/x64/inssel-x64.cpp
+		DEPENDS netvmburg
+		${NETVM_JIT_DIR}/x64/inssel-x64.brg
+		WORKING_DIRECTORY "${NETVM_BASE_DIR}/tools/bin"
+		)
+
+	target_sources(nbnetvm PRIVATE
 		${NETVM_JIT_DIR}/x64/x64-asm.cpp
 		${NETVM_JIT_DIR}/x64/x64-emit.cpp
 		${NETVM_JIT_DIR}/x64/x64-backend.cpp
 		${NETVM_JIT_DIR}/x64/x64-opt.cpp
-		${NETVM_JIT_DIR}/x64/inssel-x64.cpp
+		${CMAKE_CURRENT_BINARY_DIR}/x64/inssel-x64.cpp
 		${NETVM_JIT_DIR}/x64/x64-regalloc.cpp
 		${NETVM_JIT_DIR}/x64/x64_switch_lowering.cpp
 		${NETVM_JIT_DIR}/x64/x64_counters.cpp
 		${NETVM_JIT_DIR}/x64/inssel-x64.brg
-	)
-
-	SET(NETVM_HDRS ${NETVM_HDRS}
 		${NETVM_JIT_DIR}/x64/x64-asm.h
 		${NETVM_JIT_DIR}/x64/x64-backend.h
 		${NETVM_JIT_DIR}/x64/x64-emit.h
 		${NETVM_JIT_DIR}/x64/x64-opt.h
-		${NETVM_JIT_DIR}/x64/inssel-x64.h
+		${CMAKE_CURRENT_BINARY_DIR}/x64/inssel-x64.h
 		${NETVM_JIT_DIR}/x64/x64-regalloc.h
 		${NETVM_JIT_DIR}/x64/x64_switch_lowering.h
 		${NETVM_JIT_DIR}/x64/x64_counters.h
-	)
-
-	# Set x86 disassembler source files
-	SET(X86DIS_SRCS
-		#${X86DIS_SRC_DIR}/decode.c
-		#${X86DIS_SRC_DIR}/input.c
-		#${X86DIS_SRC_DIR}/mnemonics.c
-		#${X86DIS_SRC_DIR}/opcmap.c
-		#${X86DIS_SRC_DIR}/syn-att.c
-		#${X86DIS_SRC_DIR}/syn-intel.c
-		#${X86DIS_SRC_DIR}/syn.c
-		#${X86DIS_SRC_DIR}/udis86.c
-		
 		${X86DIS_SRC_DIR}/decode.c
 		${X86DIS_SRC_DIR}/input.c
 		${X86DIS_SRC_DIR}/itab.c
@@ -824,17 +750,6 @@ IF(ENABLE_X64_BACKEND)
 		${X86DIS_SRC_DIR}/syn-att.c
 		${X86DIS_SRC_DIR}/syn-intel.c
 		${X86DIS_SRC_DIR}/udis86.c
-	)
-
-	SET(X86DIS_HDRS
-		#${X86DIS_SRC_DIR}/extern.h
-		#${X86DIS_SRC_DIR}/input.h
-		#${X86DIS_SRC_DIR}/mnemonics.h
-		#${X86DIS_SRC_DIR}/opcmap.h
-		#${X86DIS_SRC_DIR}/syn.h
-		#${X86DIS_SRC_DIR}/dis_types.h
-		#${X86DIS_SRC_DIR}/udis86.h
-		
 		${X86DIS_SRC_DIR}/decode.h
 		${X86DIS_SRC_DIR}/extern.h
 		${X86DIS_SRC_DIR}/input.h
@@ -844,178 +759,33 @@ IF(ENABLE_X64_BACKEND)
 		${X86DIS_SRC_DIR}/udis86.h
 	)
 
-	SET(NETVM_SRCS ${NETVM_SRCS}
-		${X86DIS_SRCS})
-
-	SET(NETVM_HDRS ${NETVM_HDRS}
-		${X86DIS_HDRS})
-
-	INCLUDE_DIRECTORIES(${NETVM_JIT_DIR}/x64 ${X86DIS_SRC_DIR} )
-
-	SET_SOURCE_FILES_PROPERTIES(
-		${NETVM_JIT_DIR}/x64/inssel-x64.cpp
-		${NETVM_JIT_DIR}/x64/inssel-x64.h
-		PROPERTIES GENERATED true
+	target_include_directories(nbnetvm PRIVATE
+		${NETVM_JIT_DIR}/x64
+		${X86DIS_SRC_DIR}
+		${CMAKE_CURRENT_BINARY_DIR}/x64
 	)
-
-ENDIF(ENABLE_X64_BACKEND)
-
-
-
-###############################################################################
-#
-# target defintion for runtime
-#
-
-ADD_LIBRARY(
-	nbnetvm
-	SHARED
-	${NETVM_SRCS} ${NETVM_HDRS}
-)
-
-ADD_SUBDIRECTORY(${NETVM_BASE_DIR}/tools/makenetilscanner)
-ADD_SUBDIRECTORY(${NETVM_BASE_DIR}/tools/makeopcodetable)
-ADD_SUBDIRECTORY(${NETVM_BASE_DIR}/tools/netvmburg)
-
-ADD_DEPENDENCIES(nbnetvm makenetilscanner makeopcodetable netvmburg)
-
-SET(scanner_prefix nvmparser_)
-GET_TARGET_PROPERTY(NETVM_ASM_SCANNER_EXE makenetilscanner LOCATION)
-GET_TARGET_PROPERTY(MAKEOPCODETABLE_EXE makeopcodetable LOCATION)
-GET_TARGET_PROPERTY(NETVMBURG_EXE netvmburg LOCATION)
-
-ADD_CUSTOM_COMMAND(
-	OUTPUT
-	${NETVM_SRC_DIR}/opcodestable.txt
-	COMMAND ${MAKEOPCODETABLE_EXE} "../../opcodes.txt" 1> "../../opcodestable.txt"
-	DEPENDS
-	${NETVM_SRC_DIR}/opcodes.txt makeopcodetable
-	WORKING_DIRECTORY "${NETVM_BASE_DIR}/tools/bin"
-	)
-
-ADD_CUSTOM_COMMAND(
-	OUTPUT
-	${NETVM_ASM_DIR}/nvm_gramm.tab.c
-	${NETVM_ASM_DIR}/nvm_gramm.tab.h
-	COMMAND bison -bgramm -d -p "${scanner_prefix}" "../../assembler/nvm_gramm.y" -o "../../assembler/nvm_gramm.tab.c"
-	DEPENDS ${NETVM_ASM_DIR}/nvm_gramm.y
-	WORKING_DIRECTORY "${NETVM_BASE_DIR}/tools/bin"
-	)
-
-ADD_CUSTOM_COMMAND(
-	OUTPUT
-	${NETVM_ASM_DIR}/scanner.l
-	${NETVM_ASM_DIR}/scanner.c
-
-	COMMAND ${NETVM_ASM_SCANNER_EXE} "../../opcodes.txt" "../../assembler/scanner-template.l" > "../../assembler/scanner.l"
-
-	COMMAND flex -P${scanner_prefix} -i -o"../../assembler/scanner.c" "../../assembler/scanner.l"
-	DEPENDS makenetilscanner
-	${NETVM_ASM_DIR}/scanner-template.l
-	${NETVM_SRC_DIR}/opcodes.txt
-	WORKING_DIRECTORY "${NETVM_BASE_DIR}/tools/bin"
-	)
-
-ADD_CUSTOM_COMMAND(
-	OUTPUT ${NETVM_JIT_DIR}/ia32/inssel-ia32.cpp
-	${NETVM_JIT_DIR}/ia32/inssel-ia32.h
-	COMMAND ${NETVMBURG_EXE} 
-	ARGS
-#comment the following line to disable constant swapping
-	-DSWAP_CONST
-	-C IA32InsSelector -p -d ../../jit/ia32/inssel-ia32.h ../../jit/ia32/inssel-ia32.brg > ../../jit/ia32/inssel-ia32.cpp
-	DEPENDS netvmburg
-	${NETVM_JIT_DIR}/ia32/inssel-ia32.brg
-	WORKING_DIRECTORY "${NETVM_BASE_DIR}/tools/bin"
-	)
-
-ADD_CUSTOM_COMMAND(
-	OUTPUT ${NETVM_JIT_DIR}/x64/inssel-x64.cpp
-	${NETVM_JIT_DIR}/x64/inssel-x64.h
-	COMMAND ${NETVMBURG_EXE} 
-	ARGS
-#comment the following line to disable constant swapping
-	-DSWAP_CONST
-	-C X64InsSelector -p -d ../../jit/x64/inssel-x64.h ../../jit/x64/inssel-x64.brg > ../../jit/x64/inssel-x64.cpp
-	DEPENDS netvmburg
-	${NETVM_JIT_DIR}/x64/inssel-x64.brg
-	WORKING_DIRECTORY "${NETVM_BASE_DIR}/tools/bin"
-	)
-
-ADD_CUSTOM_COMMAND(
-	OUTPUT ${NETVM_JIT_DIR}/x11/inssel-x11.cpp
-	${NETVM_JIT_DIR}/x11/inssel-x11.h
-	COMMAND ${NETVMBURG_EXE} ARGS -C X11InsSelector -p -d ../../jit/x11/inssel-x11.h ../../jit/x11/inssel-x11.brg > ../../jit/x11/inssel-x11.cpp
-	DEPENDS netvmburg
-	${NETVM_JIT_DIR}/x11/inssel-x11.brg
-	WORKING_DIRECTORY "${NETVM_BASE_DIR}/tools/bin"
-	)
-
-ADD_CUSTOM_COMMAND(
-	OUTPUT ${NETVM_JIT_DIR}/octeon/inssel-octeon.cpp
-	${NETVM_JIT_DIR}/octeon/inssel-octeon.h
-	COMMAND ${NETVMBURG_EXE} ARGS -C OcteonInsSelector -p -d ../../jit/octeon/inssel-octeon.h ../../jit/octeon/inssel-octeon.brg > ../../jit/octeon/inssel-octeon.cpp
-	DEPENDS netvmburg
-	${NETVM_JIT_DIR}/octeon/inssel-octeon.brg
-	WORKING_DIRECTORY "${NETVM_BASE_DIR}/tools/bin"
-	)
-    
-ADD_CUSTOM_COMMAND(
-	OUTPUT ${NETVM_JIT_DIR}/octeonc/inssel-octeonc.cpp
-	${NETVM_JIT_DIR}/octeonc/inssel-octeonc.h
-	COMMAND ${NETVMBURG_EXE} ARGS -C OcteoncInsSelector -p -d
-    ../../jit/octeonc/inssel-octeonc.h ../../jit/octeonc/inssel-octeonc.brg >
-    ../../jit/octeonc/inssel-octeonc.cpp
-	DEPENDS netvmburg
-	${NETVM_JIT_DIR}/octeonc/inssel-octeonc.brg
-	WORKING_DIRECTORY "${NETVM_BASE_DIR}/tools/bin"
-	)
-
+endif()
 
 # Platform-specific definitions
-IF(WIN32)
-	ADD_DEFINITIONS(
-		-D_CRT_SECURE_NO_WARNINGS
-		-D_CRT_SECURE_NO_DEPRECATE
-		-D_SCL_SECURE_NO_DEPRECATE
-		-DWIN32_LEAN_AND_MEAN
-		-DNETVM_EXPORTS
-		-D__STDC__
+if(WIN32)
+	target_compile_definitions(nbnetvm PRIVATE
+		_CRT_SECURE_NO_WARNINGS
+		_CRT_SECURE_NO_DEPRECATE
+		_SCL_SECURE_NO_DEPRECATE
+		WIN32_LEAN_AND_MEAN
+		NETVM_EXPORTS
+		__STDC__
 	)
-ENDIF(WIN32)
+endif()
 
-ADD_DEFINITIONS(-DAVAILABLE_COPROS_NO=${AVAILABLE_COPROS_NO})
-
-
+target_compile_definitions(nbnetvm PRIVATE AVAILABLE_COPROS_NO=${AVAILABLE_COPROS_NO})
 
 ######################################################################################################################
 #
 # libraries linked with netvm
 #
 
-IF(WIN32)
-  TARGET_LINK_LIBRARIES(nbnetvm ws2_32.lib wpcap.lib pcre.lib)
-ELSE(WIN32)
-	TARGET_LINK_LIBRARIES(nbnetvm pcap ${PCRE_LIBRARIES})
-	INCLUDE_DIRECTORIES(${PCRE_INCLUDE_DIR})
-ENDIF(WIN32)
-
-
-# Copy generated files in the right place
-IF(WIN32)
-	ADD_CUSTOM_COMMAND(
-		TARGET nbnetvm
-		POST_BUILD
-		COMMAND cp ${CMAKE_CFG_INTDIR}/nbnetvm.lib ../../lib/.
-		COMMAND cp ${CMAKE_CFG_INTDIR}/nbnetvm.exp ../../lib/.
-		COMMAND cp ${CMAKE_CFG_INTDIR}/nbnetvm.dll ../../bin/.
-	)
-ELSE(WIN32)
-	ADD_CUSTOM_COMMAND(
-		TARGET nbnetvm
-		POST_BUILD
-		COMMAND cp ${NETVM_BASE_DIR}/libnbnetvm* ../../lib/.
-		COMMAND cp ${NETVM_BASE_DIR}/libnbnetvm* ../../bin/.
-	)
-ENDIF(WIN32)
-
+target_link_libraries(nbnetvm PRIVATE netbeeOptions pcre $<$<BOOL:${PCAP_FOUND}>:pcap>)
+if(WIN32)
+	target_link_libraries(nbnetvm PRIVATE ws2_32.lib)
+endif()

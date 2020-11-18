@@ -46,12 +46,12 @@ class Redistribution : public OptimizationStep<_CFG> {
 		
 		std::map<RegType, uint32_t> count;
 		
-		RedistributionFunctor(bool &, std::list<IR*> &);
+		RedistributionFunctor(bool &, std::list<typename _CFG::IRType*>&);
 		
 		bool is_add_with_constant(IR*, uint32_t &, IR*&);
 		
-		void operator()(IR*, typename BBType::IRStmtNodeIterator,
-			std::list<IR*> &);
+		void operator()(typename _CFG::IRType*, typename _CFG::BBType::IRStmtNodeIterator,
+			std::list<typename _CFG::IRType*>&);
 			
 		bool redistribute(IR*);
 			

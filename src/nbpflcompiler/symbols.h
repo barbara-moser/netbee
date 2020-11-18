@@ -1053,7 +1053,7 @@ struct SymbolLookupTable: public Symbol
 		: Symbol(SYM_RT_LOOKUP), Name(name), Validity(validity), MaxExactEntriesNr(maxExactEntriesNr), MaxMaskedEntriesNr(maxMaskedEntriesNr),
 		KeysList(0), KeysListSize(0), ValuesList(0), ValuesListSize(0), Label(0)
 	{
-		int i$ = Name.find("$");
+		auto i$ = Name.find("$");
 		if (i$>=0)
 			Label = new SymbolLabel(LBL_ID, 0, string("lookup_").append(Name.substr(i$+1)));
 		else

@@ -1,42 +1,25 @@
-/*
- * Copyright (c) 2002 - 2011
- * NetGroup, Politecnico di Torino (Italy)
- * All rights reserved.
- * 
- * Redistribution and use in source and binary forms, with or without 
- * modification, are permitted provided that the following condition 
- * is met:
- * 
- * Neither the name of the Politecnico di Torino nor the names of its 
- * contributors may be used to endorse or promote products derived from 
- * this software without specific prior written permission. 
- * 
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS 
- * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT 
- * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR 
- * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT 
- * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, 
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT 
- * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, 
- * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY 
- * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT 
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE 
- * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- * 
- */
+/*****************************************************************************/
+/*                                                                           */
+/* Copyright notice: please read file license.txt in the NetBee root folder. */
+/*                                                                           */
+/*****************************************************************************/
 
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <pcap.h>
 #include <nbee.h>
-#include "../common/measure.h"			// Code for measurement
-
+#include <vector>
+#include <string>
 
 #define PDMLFILE "pdmlout.xml"
 #define PSMLFILE "psmlout.xml"
 
+struct pcap_pkthdr { // FIXME HACK
+	struct timeval ts;	/* time stamp */
+	uint32_t caplen;	/* length of portion present */
+	uint32_t len;	/* length this packet (off wire) */
+};
 
 // Global variables for configuration
 int ShowNetworkNames;
@@ -185,10 +168,9 @@ int main(int argc, char *argv[])
 {
 nbPacketDecoder *Decoder;
 nbPacketDecoderVars* PacketDecoderVars;
-nbPacketDumpFilePcap* PcapPacketDumpFile;
-char ErrBuf[PCAP_ERRBUF_SIZE + 1];
+char ErrBuf[2048 + 1];
 char Buffer[2048];
-nbNetPDLLinkLayer_t LinkLayerType;
+nbNetPDLLinkLayer_t LinkLayerType = nbNETPDL_LINK_LAYER_ETHERNET;
 int PacketCounter= 1;
 int NetPDLProtoDBFlags;
 int NetPDLDecoderFlags;
@@ -272,22 +254,6 @@ int NetPDLDecoderFlags;
 	else
 		strcpy(Buffer, "samplecapturedump.acp");
 
-	if ((PcapPacketDumpFile= nbAllocatePacketDumpFilePcap(ErrBuf, sizeof(ErrBuf))) == NULL)
-	{
-		printf("Error creating the PcapPacketDumpFile: %s.\n", ErrBuf);
-		return nbFAILURE;
-	}
-
-	//if (PcapPacketDumpFile->OpenDumpFile(Buffer, 0) == nbFAILURE)
-	//{
-	//	printf("%s", PcapPacketDumpFile->GetLastError());
-	//	return nbFAILURE;
-	//}
-	if (PcapPacketDumpFile->OpenDumpFile(Buffer, 1) == nbFAILURE)
-	{
-		printf("%s", PcapPacketDumpFile->GetLastError());
-		return nbFAILURE;
-	}
 
 
 	// Get the PacketDecoderVars; let's do the check, although it is not really needed
@@ -300,61 +266,45 @@ int NetPDLDecoderFlags;
 	// Set the appropriate NetPDL configuration variables
 	PacketDecoderVars->SetVariableNumber((char*) NETPDL_VARIABLE_SHOWNETWORKNAMES, ShowNetworkNames);
 
-	if (PcapPacketDumpFile->GetLinkLayerType(LinkLayerType) == nbFAILURE)
-	{
-		printf("%s", PcapPacketDumpFile->GetLastError());
-		return nbFAILURE;
-	}
-
 	printf("\nStarting the file processing...\n\n");
 
-	CMeasurement ElapsedTime;
-	ElapsedTime.Start();
-
-	while (1)
+	// Without the optional PCAP dependency, you will need to read your packets on your own. For demonstration purposes,
+	// we use a plain array.
+	std::vector<std::pair<const char*, size_t>> packets = {
+		{"\xff\xff\xff\xff\xff\xff\x00\x80\xc7\xcb\x43\x9a\x08\x06\x00\x01\x08\x00\x06\x04\x00\x01\x00\x80\xc7\xcb\x43\x9a\x82\xc0"
+		 "\x10\x51\x00\x00\x00\x00\x00\x00\x82\xc0\x10\x11", 42},
+		{"\x00\x80\xc7\xcb\x43\x9a\x00\xe0\x1e\xec\x3c\x84\x08\x06\x00\x01\x08\x00\x06\x04\x00\x02\x00\xe0\x1e\xec\x3c\x84\x82\xc0"
+		 "\x10\x11\x00\x80\xc7\xcb\x43\x9a\x82\xc0\x10\x51\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00",60},
+		{"\x00\xe0\x1e\xec\x3c\x84\x00\x80\xc7\xcb\x43\x9a\x08\x00\x45\x00\x00\x3c\x04\x46\x00\x00\x80\x01\xd8\xbf\x82\xc0\x10\x51"
+		 "\xc0\xa8\x0a\x02\x08\x00\x24\x5c\x02\x00\x27\x00\x61\x62\x63\x64\x65\x66\x67\x68\x69\x6a\x6b\x6c\x6d\x6e\x6f\x70\x71\x72"
+		 "\x73\x74\x75\x76\x77\x61\x62\x63\x64\x65\x66\x67\x68\x69", 74},
+		{"\x00\x06\x29\x99\x2d\xa3\x00\xe0\x1e\xec\x3c\x84\x08\x00\x45\x00\x00\x3c\x04\x46\x00\x00\x7f\x01\xd9\xbf\x82\xc0\x10\x51"
+		 "\xc0\xa8\x0a\x02\x08\x00\x24\x5c\x02\x00\x27\x00\x61\x62\x63\x64\x65\x66\x67\x68\x69\x6a\x6b\x6c\x6d\x6e\x6f\x70\x71\x72"
+		 "\x73\x74\x75\x76\x77\x61\x62\x63\x64\x65\x66\x67\x68\x69", 74},
+		{"\x00\xe0\x1e\xec\x3c\x84\x00\x06\x29\x99\x2d\xa3\x08\x00\x45\x00\x00\x3c\xe5\x02\x00\x00\x80\x01\xf8\x02\xc0\xa8\x0a\x02"
+		 "\x82\xc0\x10\x51\x00\x00\x2c\x5c\x02\x00\x27\x00\x61\x62\x63\x64\x65\x66\x67\x68\x69\x6a\x6b\x6c\x6d\x6e\x6f\x70\x71\x72\x73\x74\x75\x76\x77\x61\x62\x63\x64\x65\x66\x67\x68\x69", 74},
+		{"\x00\x80\xc7\xcb\x43\x9a\x00\xe0\x1e\xec\x3c\x84\x08\x00\x45\x00\x00\x3c\xe5\x02\x00\x00\x7f\x01\xf9\x02\xc0\xa8\x0a\x02"
+		 "\x82\xc0\x10\x51\x00\x00\x2c\x5c\x02\x00\x27\x00\x61\x62\x63\x64\x65\x66\x67\x68\x69\x6a\x6b\x6c\x6d\x6e\x6f\x70\x71\x72"
+		 "\x73\x74\x75\x76\x77\x61\x62\x63\x64\x65\x66\x67\x68\x69", 74}
+	};
+	for (const auto& packet : packets)
 	{
-	int RetVal;
-	struct pcap_pkthdr* PktHeader;
-	const unsigned char* PktData;
-
-		RetVal= PcapPacketDumpFile->GetNextPacket(&PktHeader, &PktData);
-//		RetVal= PcapPacketDumpFile->GetPacket(PacketCounter, &PktHeader, &PktData);
-
-		if (RetVal == nbFAILURE)
-		{
-			printf("%s", PcapPacketDumpFile->GetLastError());
-			return nbFAILURE;
-		}
-
-		// EOF
-		if (RetVal == nbWARNING)
-			break;
+		int RetVal;
+		struct pcap_pkthdr PktHeader;
+		PktHeader.ts.tv_sec=42;
+		PktHeader.ts.tv_usec=0;
+		PktHeader.len = PktHeader.caplen = packet.second;
 
 		// Decode packet
-		if (Decoder->DecodePacket(LinkLayerType, PacketCounter, PktHeader, PktData) == nbFAILURE)
+		if (Decoder->DecodePacket(LinkLayerType, PacketCounter, &PktHeader, reinterpret_cast<const unsigned char*>(packet.first)) == nbFAILURE)
 		{
 			printf("\nError decoding a packet %s\n\n", Decoder->GetLastError());
 			// Let's break and save what we've done so far
 			break;
 		}
 
-#ifdef _DEBUG
-		// In case we're in debug mode, let's print always the packet number
-		// This is useful to check that the processing is going on (i.e. that the packet decoder
-		// isn't hanging up in some infinite loop)
-//		printf("%d ", PacketCounter);
-#else
-		// In case none of these define are active, let's print the packet number
-		// These defines are often used to make performance measurement, hence we should
-		// avoid any un-necessary overhead such as printing something on screen
-		//if ((!DecodingOnly) && (!CompleteDecodingOnly))
-			//printf("%d ", PacketCounter);
-#endif
-
 		PacketCounter++;
 	}
-
-	ElapsedTime.EndAndPrint();
 
 	printf("\nRead and decoded %d packets.\n\n", PacketCounter - 1);
 
@@ -399,7 +349,6 @@ int NetPDLDecoderFlags;
 
 	// delete the decoder
 	nbDeallocatePacketDecoder(Decoder);
-	nbDeallocatePacketDumpFilePcap(PcapPacketDumpFile);
 
 	nbCleanup();
 

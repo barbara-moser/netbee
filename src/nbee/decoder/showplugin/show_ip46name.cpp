@@ -29,7 +29,7 @@ int PrintIPv46LiteralNames(struct _ShowPluginParams *ShowPluginParams)
 {
 bool IsIPv4= true;
 char HostName[NI_MAXHOST];			// NI_MAXHOST is currently defined as 1025
-unsigned int Ret;
+unsigned long long Ret;
 unsigned int FieldStartOffset;
 
 	// Check if the user wants to translate addresses into hex form

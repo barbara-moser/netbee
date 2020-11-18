@@ -79,7 +79,7 @@ public:
 		\return nbSUCCESS if everything is fine, nbFAILURE in case or error.
 		In case of error, the error message can be retrieved by the GetLastError() method.
 	*/
-	virtual int GetVariableID(const char* Name, int* VariableID)= 0;
+	virtual int GetVariableID(const char* Name, long long* VariableID)= 0;
 
 	/*!
 		\brief Clear the variables whose validity is limited to one packet.
@@ -108,7 +108,7 @@ public:
 		\warning In case this function is used often and performance are important,
 		the equivalent function that accepts the VariableID parameter should be used instead.
 	*/
-	virtual int SetVariableNumber(char* Name, unsigned int Value)= 0;
+	virtual long long SetVariableNumber(char* Name, unsigned long long Value)= 0;
 
 	/*!
 		\brief Set the value (as a buffer) of a run-time variable.
@@ -130,7 +130,7 @@ public:
 		\warning In case this function is used often and performance are important,
 		the equivalent function that accepts the VariableID parameter should be used instead.
 	*/
-	virtual int SetVariableBuffer(char* Name, unsigned char* Value, unsigned int StartingOffset, unsigned int Size)= 0;
+	virtual int SetVariableBuffer(char* Name, unsigned char* Value, unsigned long long StartingOffset, unsigned long long Size)= 0;
 
 	/*!
 		\brief Set the value (as a pointer) of a run-time variable.
@@ -150,7 +150,7 @@ public:
 		\warning In case this function is used often and performance are important,
 		the equivalent function that accepts the VariableID parameter should be used instead.
 	*/
-	virtual int SetVariableRefBuffer(char* Name, unsigned char* Value, unsigned int StartingOffset, unsigned int Size)= 0;
+	virtual int SetVariableRefBuffer(char* Name, unsigned char* Value, unsigned long long StartingOffset, unsigned long long Size)= 0;
 
 	/*!
 		\brief Get the value of a run-time variable.
@@ -167,7 +167,7 @@ public:
 		\warning In case this function is used often and performance are important,
 		the equivalent function that accepts the VariableID parameter should be used instead.
 	*/
-	virtual int GetVariableNumber(char* Name, unsigned int* ReturnValue)= 0;
+	virtual int GetVariableNumber(char* Name, unsigned long long* ReturnValue)= 0;
 
 	/*!
 		\brief Get the value of a run-time variable.
@@ -189,7 +189,7 @@ public:
 		\warning In case this function is used often and performance are important,
 		the equivalent function that accepts the VariableID parameter should be used instead.
 	*/
-	virtual int GetVariableBuffer(char* Name, unsigned char** ReturnBufferPtr, unsigned int* ReturnBufferSize)= 0;
+	virtual int GetVariableBuffer(char* Name, unsigned char** ReturnBufferPtr, unsigned long long* ReturnBufferSize)= 0;
 
 	/*!
 		\brief Set the value of a run-time variable.
@@ -205,7 +205,7 @@ public:
 
 		\warning Please note that the library does not check the validity of the VariableID.
 	*/
-	virtual void SetVariableNumber(int VariableID, unsigned int Value)= 0;
+	virtual void SetVariableNumber(long long VariableID, unsigned long long Value)= 0;
 
 	/*!
 		\brief Set the value (as a buffer) of a run-time variable.
@@ -223,7 +223,7 @@ public:
 
 		\warning Please note that the library does not check the validity of the VariableID.
 	*/
-	virtual void SetVariableBuffer(int VariableID, unsigned char* Value, int StartingOffset, int Size)= 0;
+	virtual void SetVariableBuffer(long long VariableID, unsigned char* Value, long long StartingOffset, long long Size)= 0;
 
 	/*!
 		\brief Set the value (as a pointer) of a run-time variable.
@@ -242,7 +242,7 @@ public:
 
 		\warning Please note that the library does not check the validity of the VariableID.
 	*/
-	virtual void SetVariableRefBuffer(int VariableID, unsigned char* PtrValue, int StartingOffset, int Size)= 0;
+	virtual void SetVariableRefBuffer(long long VariableID, unsigned char* PtrValue, long long StartingOffset, long long Size)= 0;
 
 	/*!
 		\brief Get the value of a run-time variable.
@@ -258,7 +258,7 @@ public:
 
 		\warning Please note that the library does not check the validity of the VariableID.
 	*/
-	virtual void GetVariableNumber(int VariableID, unsigned int* ReturnValue)= 0;
+	virtual void GetVariableNumber(long long VariableID, unsigned long long* ReturnValue)= 0;
 
 	/*!
 		\brief Return the pointer to the requested variable.
@@ -273,7 +273,7 @@ public:
 
 		\warning Please note that the library does not check the validity of the VariableID.
 	*/
-	virtual void GetVariableBuffer(int VariableID, unsigned char** ReturnBufferPtr, unsigned int* ReturnBufferSize)= 0;
+	virtual void GetVariableBuffer(long long VariableID, unsigned char** ReturnBufferPtr, unsigned long long* ReturnBufferSize)= 0;
 
 	/*!
 		\brief Return the pointer to the requested variable.
@@ -302,7 +302,7 @@ public:
 
 		\warning Please note that the library does not check the validity of the VariableID.
 	*/
-	virtual int GetVariableBuffer(int VariableID, int StartAt, int Size, unsigned char** ReturnBufferPtr, unsigned int* ReturnBufferSize)= 0;
+	virtual int GetVariableBuffer(long long VariableID, long long StartAt, long long Size, unsigned char** ReturnBufferPtr, unsigned long long* ReturnBufferSize)= 0;
 
 
 	/*! 
@@ -346,7 +346,7 @@ struct _nbLookupTableKey
 	//! must be considered", and '0' means "the value of the corresponding bit in the Value field must not be considered".
 	unsigned char* Mask;
 	//! Size of 'Value' member.
-	unsigned int Size;
+	unsigned long long Size;
 	//! Data Type; it can assume the 'number', 'buffer' and 'protocol' values, encoded according to the VariableDataType element of struct _nbNetPDLElementVariable (in the 'nbprotodb' module).
 	//! It is a duplication of the same member of struct _nbNetPDLElementKeyData, defined in the 'nbprotodb' module.
 	int KeyType;
@@ -368,7 +368,7 @@ struct _nbLookupTableData
 	//! - the actual data, in case the data type is a 'number' or a 'protocol' (in order to avoid one indirection) (this supposes sizeof(char*) = sizeof(int))
 	unsigned char* Value;
 	//! Size of the 'Value' member.
-	unsigned int Size;
+	unsigned long long Size;
 	//! Data Type; it can assume the 'number', 'buffer' and 'protocol' values, encoded according to the VariableDataType element of struct _nbNetPDLElementVariable (in the 'nbprotodb' module).
 	//! It is a duplication of the same member of struct _nbNetPDLElementKeyData, defined in the 'nbprotodb' module.
 	int DataType;
@@ -421,7 +421,7 @@ public:
 		\return nbSUCCESS if everything is fine, nbFAILURE in case or error.
 		In case of error, the error message can be retrieved by the GetLastError() method.
 	*/
-	virtual int GetTableID(char* TableName, char *DataName, int *TableID, int *DataID)= 0;
+	virtual int GetTableID(char* TableName, char *DataName, long long* TableID, unsigned long long* DataID)= 0;
 
 	/*!
 		\brief Check if there are old entries and it deletes them.
@@ -464,7 +464,7 @@ public:
 		\note The size of this array is not returned back. However, the user usually knows its
 		size thanks to the _nbNetPDLElementLookupKeyData structure.
 	*/
-	virtual struct _nbLookupTableKey* GetStructureForTableKey(int TableID)= 0;
+	virtual struct _nbLookupTableKey* GetStructureForTableKey(long long TableID)= 0;
 
 	/*!
 		\brief Returns a structure used to pass parameters to most of the members of this class.
@@ -490,7 +490,7 @@ public:
 		\note The size of this array is not returned back. However, the user usually knows its
 		size thanks to the _nbNetPDLElementLookupKeyData structure.
 	*/
-	virtual struct _nbLookupTableData* GetStructureForTableData(int TableID)= 0;
+	virtual struct _nbLookupTableData* GetStructureForTableData(long long TableID)= 0;
 
 	/*!
 		\brief Add a new valid entry in the lookup table.
@@ -540,7 +540,7 @@ public:
 		\return nbSUCCESS if everything is fine, nbFAILURE otherwise.
 		In case of error, the error message can be retrieved by the GetLastError() method.
 	*/
-	virtual int AddTableEntry(int TableID, struct _nbLookupTableKey KeyList[], struct _nbLookupTableData DataList[], int TimestampSec,
+	virtual int AddTableEntry(long long TableID, struct _nbLookupTableKey KeyList[], struct _nbLookupTableData DataList[], int TimestampSec,
 								int KeysHaveMasks, nbNetPDLUpdateLookupTableAddValidityTypes_t 	Validity, int KeepTime, int HitTime, int NewHitTime)= 0;
 
 	/*!
@@ -560,7 +560,7 @@ public:
 		\return nbSUCCESS if everything is fine, nbFAILURE otherwise.
 		In case of error, the error message can be retrieved by the GetLastError() method.
 	*/
-	virtual int PurgeTableEntry(int TableID, struct _nbLookupTableKey KeyList[], int MaskedEntry, int TimestampSec)= 0;
+	virtual int PurgeTableEntry(long long TableID, struct _nbLookupTableKey KeyList[], int MaskedEntry, int TimestampSec)= 0;
 
 	/*!
 		\brief Mark as obsolete a given entry from the lookup table.
@@ -585,7 +585,7 @@ public:
 		\return nbSUCCESS if everything is fine, nbFAILURE otherwise.
 		In case of error, the error message can be retrieved by the GetLastError() method.
 	*/
-	virtual int ObsoleteTableEntry(int TableID, struct _nbLookupTableKey KeyList[], int MaskedEntry, int TimestampSec)= 0;
+	virtual int ObsoleteTableEntry(long long TableID, struct _nbLookupTableKey KeyList[], int MaskedEntry, int TimestampSec)= 0;
 
 	/*!
 		\brief Checks if a given entry is present in the lookup table.
@@ -616,7 +616,7 @@ public:
 		\note (for NetBee developers only) If the entry is found in the table, the
 		'MatchingEntry' pointer of the main table structure will point to the matching element.
 	*/
-	virtual int LookupForTableEntry(int TableID, struct _nbLookupTableKey KeyList[], int TimestampSec, int MatchExactEntries, int MatchMaskEntries, int GetFirstMatch= 1)= 0;
+	virtual int LookupForTableEntry(long long TableID, struct _nbLookupTableKey KeyList[], int TimestampSec, int MatchExactEntries, int MatchMaskEntries, int GetFirstMatch= 1)= 0;
 
 	/*!
 		\brief Checks if a given entry is present in the lookup table; if so, it updates also the entry (if needed).
@@ -641,7 +641,7 @@ public:
 		\note (for NetBee developers only) If the entry is found in the table, the
 		'MatchingEntry' pointer of the main table structure will point to the matching element.
 	*/
-	virtual int LookupAndUpdateTableEntry(int TableID, struct _nbLookupTableKey KeyList[], int TimestampSec)= 0;
+	virtual int LookupAndUpdateTableEntry(long long TableID, struct _nbLookupTableKey KeyList[], int TimestampSec)= 0;
 
 	/*!
 		\brief Scan the table and returns all the table entries contained in there.
@@ -671,7 +671,7 @@ public:
 		if the entry is not present (but no errors occur), nbFAILURE in case of error.
 		In case of error, the error message can be retrieved by the GetLastError() method.
 	*/
-	virtual int ScanTableEntries(int TableID, int ScanExactEntries, struct _nbLookupTableKey** KeyList, struct _nbLookupTableData** DataList, void** CurrentElementHandler)= 0;
+	virtual int ScanTableEntries(long long TableID, int ScanExactEntries, struct _nbLookupTableKey** KeyList, struct _nbLookupTableData** DataList, void** CurrentElementHandler)= 0;
 
 	/*!
 		\brief Return the value associated to a given data field in the lookup table.
@@ -699,7 +699,7 @@ public:
 		\return nbSUCCESS if everything is fine, nbFAILURE otherwise.
 		In case of error, the error message can be retrieved by the GetLastError() method.
 	*/
-	virtual int GetTableDataBuffer(int TableID, int DataID, unsigned int StartAt, unsigned int Size, unsigned char **DataValue, unsigned int *DataSize)= 0;
+	virtual int GetTableDataBuffer(long long TableID, long long DataID, unsigned long long StartAt, unsigned long long Size, unsigned char **DataValue, unsigned long long* DataSize)= 0;
 
 	/*!
 		\brief Return the value (as number) of the requested variable.
@@ -719,7 +719,7 @@ public:
 		\return nbSUCCESS if everything is fine, nbFAILURE in case or error.
 		In case of error, the error message can be retrieved by the GetLastError() method.
 	*/
-	virtual int GetTableDataNumber(int TableID, int DataID, unsigned int* DataValue)= 0;
+	virtual int GetTableDataNumber(long long TableID, long long DataID, unsigned long long* DataValue)= 0;
 
 	/*!
 		\brief Set the value associated to a given data field in the lookup table.
@@ -745,7 +745,7 @@ public:
 		\return nbSUCCESS if everything is fine, nbFAILURE otherwise.
 		In case of error, the error message can be retrieved by the GetLastError() method.
 	*/
-	virtual int SetTableDataBuffer(int TableID, int DataID, unsigned char *DataValue, unsigned int StartingOffset, unsigned int DataSize)= 0;
+	virtual int SetTableDataBuffer(long long TableID, long long DataID, unsigned char *DataValue, unsigned long long StartingOffset, unsigned long long DataSize)= 0;
 
 	/*!
 		\brief Set the value associated to a given data field in the lookup table.
@@ -765,7 +765,7 @@ public:
 		\return nbSUCCESS if everything is fine, nbFAILURE otherwise.
 		In case of error, the error message can be retrieved by the GetLastError() method.
 	*/
-	virtual int SetTableDataNumber(int TableID, int DataID, unsigned int DataValue)= 0;
+	virtual int SetTableDataNumber(long long TableID, long long DataID, unsigned long long DataValue)= 0;
 
 	/*!
 		\brief Return the first entry in the table.
@@ -785,7 +785,7 @@ public:
 		\return nbSUCCESS if everything is fine, nbFAILURE otherwise.
 		In case of error, the error message can be retrieved by the GetLastError() method.
 	*/
-	virtual int GetTableFirstEntry(int TableID, int GetExactEntry, struct _nbLookupTableKey** KeyList, struct _nbLookupTableData** DataList)= 0;
+	virtual int GetTableFirstEntry(long long TableID, int GetExactEntry, struct _nbLookupTableKey** KeyList, struct _nbLookupTableData** DataList)= 0;
 
 	/*!
 		\brief Return the current matching entry in the table.
@@ -805,7 +805,7 @@ public:
 		\return nbSUCCESS if everything is fine, nbFAILURE otherwise.
 		In case of error, the error message can be retrieved by the GetLastError() method.
 	*/
-	virtual int GetTableMatchingEntry(int TableID, struct _nbLookupTableKey** KeyList, struct _nbLookupTableData** DataList)= 0;
+	virtual int GetTableMatchingEntry(long long TableID, struct _nbLookupTableKey** KeyList, struct _nbLookupTableData** DataList)= 0;
 
 	/*!
 		\brief Return the next matching entry in the table.
@@ -826,7 +826,7 @@ public:
 		if the entry is not present (but no errors occur), nbFAILURE in case of error.
 		In case of error, the error message can be retrieved by the GetLastError() method.
 	*/
-	virtual int GetTableNextMatchingEntry(int TableID, struct _nbLookupTableKey** KeyList, struct _nbLookupTableData** DataList)= 0;
+	virtual int GetTableNextMatchingEntry(long long TableID, struct _nbLookupTableKey** KeyList, struct _nbLookupTableData** DataList)= 0;
 
 	/*!
 		\brief Return the number of exact entries present in the table specified.
@@ -836,7 +836,7 @@ public:
 
 		\return the number of exact entries present in the table.
 	*/
-	virtual int GetNumberOfEntries(int TableID)=0;
+	virtual long long GetNumberOfEntries(long long TableID)=0;
 
 	/*! 
 		\brief Return a string keeping the last error message that occurred within the current instance of the class

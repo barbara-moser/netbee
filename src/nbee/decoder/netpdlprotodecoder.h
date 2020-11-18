@@ -15,8 +15,7 @@
 ***/
 #define AllowGhostFieldDecode
 
-
-#include <pcap.h>
+#include "globals/pcap_structures.h"
 #include <nbprotodb.h>
 
 #include "netpdlexpression.h"
@@ -37,27 +36,25 @@ class CNetPDLProtoDecoder
 public:
 	CNetPDLProtoDecoder(CNetPDLVariables *NetPDLVars, CNetPDLExpression *ExprHandler, 
 		CPDMLMaker *PDMLMaker, CPSMLMaker *PSMLMaker, char *ErrBuf, int ErrBufSize);
-	virtual ~CNetPDLProtoDecoder();
+	virtual ~CNetPDLProtoDecoder() = default;
 
 	void Initialize(int myCurrentProtoItem, const struct pcap_pkthdr *PcapHeader);
-	int DecodeProto(const unsigned char *Packet, bpf_u_int32 SnapLen, bpf_u_int32 Offset);
+	int DecodeProto(const unsigned char *Packet, uint64_t SnapLen, uint64_t Offset);
 	int GetNextProto(struct _nbNetPDLElementBase *EncapElement, unsigned int* NextProto);
 
 private:
 
-	int DecodeFields(struct _nbNetPDLElementBase *FieldElement, unsigned int MaxOffsetToBeDecoded, struct _nbPDMLField *PDMLParent, int *LoopCtrl, unsigned int *Len);
-	int DecodeLoop(struct _nbNetPDLElementLoop *LoopElement, unsigned int MaxOffsetToBeDecoded, struct _nbPDMLField *PDMLParent);
-	int DecodeBlock(struct _nbNetPDLElementBlock *BlockElement, unsigned int MaxOffsetToBeDecoded, struct _nbPDMLField *PDMLParent, int *LoopCtrl);
-	int DecodeField(struct _nbNetPDLElementBase *FieldElement, unsigned int MaxOffsetToBeDecoded, struct _nbPDMLField *PDMLParent, int *LoopCtrl);
-	int GetFieldParams(struct _nbNetPDLElementFieldBase *FieldElement, unsigned int MaxOffsetToBeDecoded, unsigned int *StartingBytesToDiscard, unsigned int *FieldLen, unsigned int *EndingBytesToDiscard);
-	int DecodeStandardField(struct _nbNetPDLElementFieldBase *FieldElement, unsigned int MaxOffsetToBeDecoded, struct _nbPDMLField *PDMLParent, struct _nbPDMLField **CurrentPDMLElement, unsigned int* CurrentFieldStartingOffset);
-	int DecodeSubfield(struct _nbNetPDLElementSubfield *SubfieldElement, unsigned int StartingOffset, unsigned int Size, _nbPDMLField *PDMLParent, int *LoopCtrl, struct _nbPDMLField *AlreadyAllocatedPDMLElement);
-	void DecodeMapTree(struct _nbNetPDLElementCfieldXML *CfieldXMLElement, struct _nbPDMLField *PDMLFieldXML, unsigned int MinOffsetToBeDecoded, unsigned int MaxOffsetToBeDecoded);
-	int DecodeSet(struct _nbNetPDLElementSet *SetElement, unsigned int MaxOffsetToBeDecoded, struct _nbPDMLField *PDMLParent);
-	int DecodeFieldChoice(struct _nbNetPDLElementChoice *ChoiceElement, unsigned int MaxOffsetToBeDecoded, struct _nbPDMLField *PDMLParent);
-	int DecodeSubfieldChoice(struct _nbNetPDLElementChoice *ChoiceElement, unsigned int MaxOffsetToBeDecoded, struct _nbPDMLField *PDMLParent);
+	int DecodeFields(struct _nbNetPDLElementBase *FieldElement, unsigned long long MaxOffsetToBeDecoded, struct _nbPDMLField *PDMLParent, int *LoopCtrl, unsigned int *Len);
+	int DecodeLoop(struct _nbNetPDLElementLoop *LoopElement, unsigned long long MaxOffsetToBeDecoded, struct _nbPDMLField *PDMLParent);
+	int DecodeBlock(struct _nbNetPDLElementBlock *BlockElement, unsigned long long MaxOffsetToBeDecoded, struct _nbPDMLField *PDMLParent, int *LoopCtrl);
+	int DecodeField(struct _nbNetPDLElementBase *FieldElement, unsigned long long MaxOffsetToBeDecoded, struct _nbPDMLField *PDMLParent, int *LoopCtrl);
+	int GetFieldParams(struct _nbNetPDLElementFieldBase *FieldElement, unsigned long long MaxOffsetToBeDecoded, unsigned long long* StartingBytesToDiscard, unsigned long long* FieldLen, unsigned long long* EndingBytesToDiscard);
+	int DecodeStandardField(struct _nbNetPDLElementFieldBase *FieldElement, unsigned long long MaxOffsetToBeDecoded, struct _nbPDMLField *PDMLParent, struct _nbPDMLField **CurrentPDMLElement, unsigned long long* CurrentFieldStartingOffset);
+	int DecodeSubfield(struct _nbNetPDLElementSubfield *SubfieldElement, unsigned long long StartingOffset, unsigned int Size, _nbPDMLField *PDMLParent, int *LoopCtrl, struct _nbPDMLField *AlreadyAllocatedPDMLElement);
+	void DecodeMapTree(struct _nbNetPDLElementCfieldXML *CfieldXMLElement, struct _nbPDMLField *PDMLFieldXML, unsigned int MinOffsetToBeDecoded, unsigned long long MaxOffsetToBeDecoded);
+	int DecodeSet(struct _nbNetPDLElementSet *SetElement, unsigned long long MaxOffsetToBeDecoded, struct _nbPDMLField *PDMLParent);
+	int DecodeFieldChoice(struct _nbNetPDLElementChoice *ChoiceElement, unsigned long long MaxOffsetToBeDecoded, struct _nbPDMLField *PDMLParent);
 	void RollbackSpeculativeDecoding(struct _nbPDMLField *PDMLStartingElement, struct _nbPDMLField *PDMLFieldElement, struct _nbPDMLField *PDMLEndingElement);
-
 
 	int VerifyNextProto(unsigned int NextProtoIndex);
 
@@ -84,7 +81,7 @@ private:
 	CNetPDLExpression *m_exprHandler;
 
 	//! Offset (into the packet) corresponding to the first byte of this proto (used to determine the padding and for custom templates)
-	bpf_u_int32 m_protoStartingOffset;
+	uint32_t m_protoStartingOffset;
 	
 	//! packet (byte string) that has to be decoded
 	unsigned char *m_packet;

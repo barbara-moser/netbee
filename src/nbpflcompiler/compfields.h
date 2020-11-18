@@ -30,7 +30,7 @@ struct mylist{
 	StmtWhile *stmt;			//Pointer to Uncompatted (yet) Loop-Statement
 	IntMap localmap;			//Local Used-Fields-Map referred to this Loop-Statement
    // Assignment operator.
-   bool operator ==(const mylist& st)
+   bool operator ==(const mylist& st) const
    {
       return stmt == st.stmt;  			// Check only stmt pointer (Only one struct for each Uncompatted-Loop)
    }

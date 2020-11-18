@@ -10,7 +10,6 @@
 #include <string.h>
 #include <errno.h>
 
-#include <pcap.h>
 #include "packet_pcapdumpfile.h"
 #include "../globals/utils.h"
 #include "../globals/debug.h"
@@ -23,9 +22,10 @@ CPcapPacketDumpFile::CPcapPacketDumpFile()
 {
 	m_createIndexing= 0;
 	m_isFileNew= 0;
-
+#ifdef HAVE_PCAP
 	m_pcapHandle= NULL;
 	m_pcapDumpFileHandle= NULL;
+#endif
 
 	memset(m_errbuf, 0, sizeof(m_errbuf));
 }
@@ -34,6 +34,7 @@ CPcapPacketDumpFile::CPcapPacketDumpFile()
 //! Default destructor
 CPcapPacketDumpFile::~CPcapPacketDumpFile()
 {
+#ifdef HAVE_PCAP
 	if (m_pcapHandle)
 		// Using function in savefile.c instead of the one provided by the WinPcap library
 //		sf_close(m_pcapHandle);
@@ -41,11 +42,13 @@ CPcapPacketDumpFile::~CPcapPacketDumpFile()
 
 	if (m_pcapDumpFileHandle)
 		pcap_dump_close(m_pcapDumpFileHandle);
+#endif
 }
 
 
 int CPcapPacketDumpFile::OpenDumpFile(const char* FileName, bool CreateIndexing)
 {
+#ifdef HAVE_PCAP
 	m_createIndexing= CreateIndexing;
 	m_isFileNew= 0;
 
@@ -118,13 +121,14 @@ int CPcapPacketDumpFile::OpenDumpFile(const char* FileName, bool CreateIndexing)
 		}
 
 	}
-
+#endif
 	return nbSUCCESS;
 }
 
 
 int CPcapPacketDumpFile::CreateDumpFile(const char* FileName, int LinkLayerType, bool CreateIndexing)
 {
+#ifdef HAVE_PCAP
 	m_createIndexing= CreateIndexing;
 	m_isFileNew= 1;
 
@@ -151,12 +155,14 @@ int CPcapPacketDumpFile::CreateDumpFile(const char* FileName, int LinkLayerType,
 	if (CreateIndexing)
 		return (CPacketDumpFile::InitializeIndex());
 	else
+#endif
 		return nbSUCCESS;
 }
 
 
 int CPcapPacketDumpFile::CloseDumpFile()
 {
+#ifdef HAVE_PCAP
 	if (m_pcapDumpFileHandle)
 	{
 		pcap_dump_close(m_pcapDumpFileHandle);
@@ -173,13 +179,14 @@ int CPcapPacketDumpFile::CloseDumpFile()
 
 	if (m_createIndexing)
 		CPacketDumpFile::DeleteIndex();
-
+#endif
 	return nbSUCCESS;
 }
 
 
 int CPcapPacketDumpFile::AppendPacket(const struct pcap_pkthdr* PktHeader, const unsigned char* PktData, bool FlushData)
 {
+#ifdef HAVE_PCAP
 	if (m_isFileNew == 0)
 	{
 		errorsnprintf(__FILE__, __FUNCTION__, __LINE__, m_errbuf, sizeof(m_errbuf), "Cannot append a packet to an existing file.\n");
@@ -214,7 +221,7 @@ int CPcapPacketDumpFile::AppendPacket(const struct pcap_pkthdr* PktHeader, const
 		if (UpdateNewPositionInIndex( pcap_dump_ftell(m_pcapDumpFileHandle) ) == nbFAILURE)
 			return nbFAILURE;
 	}
-
+#endif
 	return nbSUCCESS;
 }
 
@@ -222,6 +229,7 @@ int CPcapPacketDumpFile::AppendPacket(const struct pcap_pkthdr* PktHeader, const
 // Take care: nbWARNING for EOF
 int CPcapPacketDumpFile::GetPacket(unsigned long PacketNumber, struct pcap_pkthdr** PktHeader, const unsigned char** PktData)
 {
+#ifdef HAVE_PCAP
 	if (m_isFileNew == 1)
 	{
 		errorsnprintf(__FILE__, __FUNCTION__, __LINE__, m_errbuf, sizeof(m_errbuf), "Cannot read packets from a file opened in writing mode.\n");
@@ -259,9 +267,7 @@ int CPcapPacketDumpFile::GetPacket(unsigned long PacketNumber, struct pcap_pkthd
 		errorsnprintf(__FILE__, __FUNCTION__, __LINE__, m_errbuf, sizeof(m_errbuf), "%s\n", pcap_geterr(m_pcapHandle));
 		return nbFAILURE;
 	}
-
-//	*PktData= m_packetBuffer;
-
+#endif
 	return nbSUCCESS;
 
 }
@@ -269,6 +275,7 @@ int CPcapPacketDumpFile::GetPacket(unsigned long PacketNumber, struct pcap_pkthd
 
 int CPcapPacketDumpFile::GetNextPacket(struct pcap_pkthdr** PktHeader, const unsigned char** PktData)
 {
+#ifdef HAVE_PCAP
 int RetVal;
 
 	if (m_isFileNew == 1)
@@ -295,13 +302,14 @@ int RetVal;
 		return nbWARNING;
 
 //	*PktData= m_packetBuffer;
-
+#endif
 	return nbSUCCESS;
 }
 
 
 int CPcapPacketDumpFile::RemovePacket(unsigned long PacketNumber)
 {
+#ifdef HAVE_PCAP
 	if (m_isFileNew == 1)
 	{
 		errorsnprintf(__FILE__, __FUNCTION__, __LINE__, m_errbuf, sizeof(m_errbuf), "Cannot delete packets from a file opened in writing mode.\n");
@@ -319,13 +327,14 @@ int CPcapPacketDumpFile::RemovePacket(unsigned long PacketNumber)
 		errorsnprintf(__FILE__, __FUNCTION__, __LINE__, m_errbuf, sizeof(m_errbuf), "The file must be indexed in order to use this function.\n");
 		return nbFAILURE;
 	}
-
+#endif
 	return CPacketDumpFile::RemovePacket(PacketNumber);
 }
 
 
 int CPcapPacketDumpFile::GetLinkLayerType(nbNetPDLLinkLayer_t &LinkLayerType)
 {
+#ifdef HAVE_PCAP
 	if (m_pcapHandle == NULL)
 	{
 		errorsnprintf(__FILE__, __FUNCTION__, __LINE__, m_errbuf, sizeof(m_errbuf), "A file must be opened first.\n");
@@ -362,7 +371,7 @@ int CPcapPacketDumpFile::GetLinkLayerType(nbNetPDLLinkLayer_t &LinkLayerType)
 			return nbFAILURE;
 		}
 	}
-
+#endif
 	return nbSUCCESS;
 }
 

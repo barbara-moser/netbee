@@ -20,6 +20,8 @@
 
 #include <nbee_packetengine.h>
 #include <nbee_extractedfieldreader.h>
+
+#include "../globals/debug.h"
 #include "../nbpacketengine/nbeepacketengine.h"
 
 #include "../globals/profiling.h"
@@ -247,12 +249,13 @@ struct _nbNetPDLDatabase *nbGetNetPDLDatabase(char *ErrBuf, int ErrBufSize)
 int nbInitialize(const char *NetPDLFileLocation, int Flags, char *ErrBuf, int ErrBufSize)
 {
 // Please take care: this control is enabled only in Windows
-#ifdef WIN32
-const char* WinPcapVerString;
-int WinPcapMajor;
-int WinPcapMinor;
+#if defined WIN32 && defined HAVE_PCAP 
+	const char* WinPcapVerString;
+	int WinPcapMajor;
+	int WinPcapMinor;
 
-	WinPcapVerString= pcap_lib_version();
+	WinPcapVerString = pcap_lib_version();
+
 	// The string begins with the format "WinPcap version X.Y"
 	sscanf(WinPcapVerString + strlen("WinPcap version"), "%d.%d", &WinPcapMajor, &WinPcapMinor);
 
@@ -263,11 +266,10 @@ int WinPcapMinor;
 			"Missing library: currently WinPcap version %d.%d is installed, while version >= 4.1 is required.",
 			WinPcapMajor, WinPcapMinor);
 
-			return nbFAILURE;
+		return nbFAILURE;
 	}
 
 #endif
-
 	// Save flags for future references (users are not allowed to change the type of database after initialization)
 	NetPDLProtoDBFlags= Flags;
 

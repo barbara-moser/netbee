@@ -290,7 +290,7 @@ yylex (void)
     if (!(c = nextchar ()))
       return 0;
 
-    yylinepos = Next - input + 1;
+    yylinepos = static_cast<int>(Next - input + 1);
 
     if (isspace (c))
       continue;
@@ -336,7 +336,7 @@ yylex (void)
       while (isalpha (*n) || isdigit (*n) || *n == '_') 
 	      n++;
 
-      l = n - Next + 1;
+      l = static_cast<int>(n - Next + 1);
       yylval.text = new string (Next - 1, l);
       Next = n;
       return IDENT;
@@ -356,7 +356,7 @@ yylex (void)
     }
 
     if (c == '{') {
-      unsigned int i = 0, d = 1;
+      size_t i = 0, d = 1;
       static char buf [100000];
 	  buf[0] = '\0';
 

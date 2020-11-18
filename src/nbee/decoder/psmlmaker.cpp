@@ -362,7 +362,7 @@ struct _nbNetPDLElementBase *NetPDLIndexItem;
 					if (IndexItemInfo->ExprTree->ReturnType == nbNETPDL_ID_EXPR_RETURNTYPE_BUFFER)
 					{
 					unsigned char *TempBufferAscii;
-					unsigned int TempBufferAsciiSize;
+					unsigned long long TempBufferAsciiSize;
 					int RetVal;
 
 						RetVal= m_exprHandler->EvaluateExprString(IndexItemInfo->ExprTree, 
@@ -379,7 +379,7 @@ struct _nbNetPDLElementBase *NetPDLIndexItem;
 					else
 					{
 					char TmpBufferAscii[NETPDL_MAX_STRING + 1];
-					unsigned int Result;
+					unsigned long long Result;
 					int RetVal;
 
 						RetVal= m_exprHandler->EvaluateExprNumber(IndexItemInfo->ExprTree, PDMLProtoItem->FirstField, &Result);
@@ -497,7 +497,7 @@ struct _nbNetPDLElementBase *NetPDLIndexItem;
 			case nbNETPDL_IDEL_IF:
 			{
 //			int RetVal;
-			unsigned int Result;
+			unsigned long long Result;
 			struct _nbNetPDLElementIf *IndexItemInfo;
 
 				if (PDMLProtoItem == NULL)

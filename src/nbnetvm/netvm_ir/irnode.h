@@ -72,7 +72,7 @@ namespace jit {
 			//!destructor
 			virtual ~IRNode() {}
 			
-			virtual uint32_t get_defined_count() {
+			virtual size_t get_defined_count() {
 				return getDefs().size();
 			}
 			

@@ -42,41 +42,41 @@ public:
 	//! This is not the most efficient way to do so, but it works nicely.
 	struct _defaultVarsList
 	{
-		int LinkType;
-		int FrameLength;
-		int PacketLength;
-		int TimestampSec;
-		int TimestampUSec;
-		int CurrentOffset;
-		int CurrentProtoOffset;
-		int PacketBuffer;
-		int PrevProto;
-		int NextProto;
-		int ShowNetworkNames;
-		int ProtoVerifyResult;
-		int TokenBeginTokenLen;
-		int TokenFieldLen;
-		int TokenEndTokenLen;
+		long long LinkType;
+		long long FrameLength;
+		long long PacketLength;
+		long long TimestampSec;
+		long long TimestampUSec;
+		long long CurrentOffset;
+		long long CurrentProtoOffset;
+		long long PacketBuffer;
+		long long PrevProto;
+		long long NextProto;
+		long long ShowNetworkNames;
+		long long ProtoVerifyResult;
+		long long TokenBeginTokenLen;
+		long long TokenFieldLen;
+		long long TokenEndTokenLen;
 	} m_defaultVarList;
 
 	// All these functions are documented in base class
 	int CreateVariable(struct _nbNetPDLElementVariable* Variable);
-	int GetVariableID(const char* Name, int* VariableID);
+	int GetVariableID(const char* Name, long long* VariableID);
 
-	void SetVariableNumber(int VariableID, unsigned int Value);
-	void SetVariableBuffer(int VariableID, unsigned char* Value, int StartingOffset, int Size);
-	void SetVariableRefBuffer(int VariableID, unsigned char* PtrValue, int StartingOffset, int Size);
+	void SetVariableNumber(long long VariableID, unsigned long long Value);
+	void SetVariableBuffer(long long VariableID, unsigned char* Value, long long StartingOffset, long long Size);
+	void SetVariableRefBuffer(long long VariableID, unsigned char* PtrValue, long long StartingOffset, long long Size);
 
-	void GetVariableNumber(int VariableID, unsigned int* ReturnValue);
-	void GetVariableBuffer(int VariableID, unsigned char** ReturnBufferPtr, unsigned int* ReturnBufferSize);
-	int GetVariableBuffer(int VariableID, int StartAt, int Size, unsigned char** ReturnBufferPtr, unsigned int* ReturnBufferSize);
+	void GetVariableNumber(long long VariableID, unsigned long long* ReturnValue);
+	void GetVariableBuffer(long long VariableID, unsigned char** ReturnBufferPtr, unsigned long long* ReturnBufferSize);
+	int GetVariableBuffer(long long VariableID, long long StartAt, long long Size, unsigned char** ReturnBufferPtr, unsigned long long* ReturnBufferSize);
 
-	int SetVariableNumber(char* Name, unsigned int Value);
-	int SetVariableBuffer(char* Name, unsigned char* Value, unsigned int StartingOffset, unsigned int Size);
-	int SetVariableRefBuffer(char* Name, unsigned char* Value, unsigned int StartingOffset, unsigned int Size);
+	long long SetVariableNumber(char* Name, unsigned long long Value);
+	int SetVariableBuffer(char* Name, unsigned char* Value, unsigned long long StartingOffset, unsigned long long Size);
+	int SetVariableRefBuffer(char* Name, unsigned char* Value, unsigned long long StartingOffset, unsigned long long Size);
 
-	int GetVariableNumber(char* Name, unsigned int* ReturnValue);
-	int GetVariableBuffer(char* Name, unsigned char** ReturnBufferPtr, unsigned int* ReturnBufferSize);
+	int GetVariableNumber(char* Name, unsigned long long* ReturnValue);
+	int GetVariableBuffer(char* Name, unsigned char** ReturnBufferPtr, unsigned long long* ReturnBufferSize);
 
 	void DoGarbageCollection(int TimestampSec);
 
@@ -98,11 +98,11 @@ private:
 		//! In case of 'buffer' variable, this buffer is allocated of size 'SizeBuffer'; otherwise, it is simply a pointer.
 		unsigned char *ValueBuffer;
 		//! Size of the data contained in previous buffer. It is meaningful only for 'buffer' and 'refbuffer' variables.
-		int Size;
+		long long Size;
 		//! Size of the previous buffer. It is meaningful only for 'buffer' variables.
 		//! This value is different from 'Size' because this is the entire size of the buffer, while 'Size' contains
 		//! only the number of data actually in it.
-		int SizeBuffer;
+		long long SizeBuffer;
 
 		//! Initialization value (if any). It is valid only in case of a nbNETPDL_VARIABLE_TYPE_NUMBER.
 		int InitValueNumber;

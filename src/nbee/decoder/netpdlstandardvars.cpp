@@ -123,7 +123,7 @@ int CNetPDLStandardVars::CreateVariable(struct _nbNetPDLElementVariable* Variabl
 
 
 // Documented in base class
-void CNetPDLStandardVars::SetVariableNumber(int VariableID, unsigned int Value)
+void CNetPDLStandardVars::SetVariableNumber(long long VariableID, unsigned long long Value)
 {
 #ifdef _DEBUG
 	if (VariableID >= m_currNumVariables)
@@ -133,12 +133,12 @@ void CNetPDLStandardVars::SetVariableNumber(int VariableID, unsigned int Value)
 	}
 #endif
 
-	m_variableList[VariableID].ValueNumber= Value;
+	m_variableList[VariableID].ValueNumber = static_cast<long>(Value);
 }
 
 
 // Documented in base class
-void CNetPDLStandardVars::SetVariableBuffer(int VariableID, unsigned char* Value, int StartingOffset, int Size)
+void CNetPDLStandardVars::SetVariableBuffer(long long VariableID, unsigned char* Value, long long StartingOffset, long long Size)
 {
 #ifdef _DEBUG
 	if (VariableID >= m_currNumVariables)
@@ -160,7 +160,7 @@ void CNetPDLStandardVars::SetVariableBuffer(int VariableID, unsigned char* Value
 
 
 // Documented in base class
-void CNetPDLStandardVars::SetVariableRefBuffer(int VariableID, unsigned char* PtrValue, int StartingOffset, int Size)
+void CNetPDLStandardVars::SetVariableRefBuffer(long long VariableID, unsigned char* PtrValue, long long StartingOffset, long long Size)
 {
 #ifdef _DEBUG
 	if (VariableID >= m_currNumVariables)
@@ -176,7 +176,7 @@ void CNetPDLStandardVars::SetVariableRefBuffer(int VariableID, unsigned char* Pt
 
 
 // Documented in base class
-void CNetPDLStandardVars::GetVariableNumber(int VariableID, unsigned int* ReturnValue)
+void CNetPDLStandardVars::GetVariableNumber(long long VariableID, unsigned long long* ReturnValue)
 {
 #ifdef _DEBUG
 	if (VariableID >= m_currNumVariables)
@@ -191,7 +191,7 @@ void CNetPDLStandardVars::GetVariableNumber(int VariableID, unsigned int* Return
 
 
 // Documented in base class
-void CNetPDLStandardVars::GetVariableBuffer(int VariableID, unsigned char** ReturnBufferPtr, unsigned int* ReturnBufferSize)
+void CNetPDLStandardVars::GetVariableBuffer(long long VariableID, unsigned char** ReturnBufferPtr, unsigned long long* ReturnBufferSize)
 {
 #ifdef _DEBUG
 	if (VariableID >= m_currNumVariables)
@@ -207,7 +207,7 @@ void CNetPDLStandardVars::GetVariableBuffer(int VariableID, unsigned char** Retu
 
 
 // Documented in base class
-int CNetPDLStandardVars::GetVariableBuffer(int VariableID, int StartAt, int Size, unsigned char** ReturnBufferPtr, unsigned int* ReturnBufferSize)
+int CNetPDLStandardVars::GetVariableBuffer(long long VariableID, long long StartAt, long long Size, unsigned char** ReturnBufferPtr, unsigned long long* ReturnBufferSize)
 {
 #ifdef _DEBUG
 	if (VariableID >= m_currNumVariables)
@@ -288,7 +288,7 @@ void CNetPDLStandardVars::DoGarbageCollection(int TimestampSec)
 
 
 // Documented in base class
-int CNetPDLStandardVars::GetVariableID(const char* Name, int* VariableID)
+int CNetPDLStandardVars::GetVariableID(const char* Name, long long* VariableID)
 {
 	for (int i= 0; i < m_currNumVariables; i++)
 	{
@@ -306,10 +306,10 @@ int CNetPDLStandardVars::GetVariableID(const char* Name, int* VariableID)
 
 
 // Documented in base class
-int CNetPDLStandardVars::SetVariableNumber(char* Name, unsigned int Value)
+long long CNetPDLStandardVars::SetVariableNumber(char* Name, unsigned long long Value)
 {
 int RetVal;
-int VariableID;
+long long VariableID;
 
 	RetVal= GetVariableID(Name, &VariableID);
 
@@ -323,10 +323,10 @@ int VariableID;
 
 
 // Documented in base class
-int CNetPDLStandardVars::GetVariableNumber(char* Name, unsigned int* ReturnValue)
+int CNetPDLStandardVars::GetVariableNumber(char* Name, unsigned long long* ReturnValue)
 {
 int RetVal;
-int VariableID;
+long long VariableID;
 
 	RetVal= GetVariableID(Name, &VariableID);
 
@@ -340,10 +340,10 @@ int VariableID;
 
 
 // Documented in base class
-int CNetPDLStandardVars::SetVariableBuffer(char *Name, unsigned char *Value, unsigned int StartingOffset, unsigned int Size)
+int CNetPDLStandardVars::SetVariableBuffer(char *Name, unsigned char *Value, unsigned long long StartingOffset, unsigned long long Size)
 {
 int RetVal;
-int VariableID;
+long long VariableID;
 
 	RetVal= GetVariableID(Name, &VariableID);
 
@@ -356,10 +356,10 @@ int VariableID;
 }
 
 
-int CNetPDLStandardVars::SetVariableRefBuffer(char *Name, unsigned char *Value, unsigned int StartingOffset, unsigned int Size)
+int CNetPDLStandardVars::SetVariableRefBuffer(char *Name, unsigned char *Value, unsigned long long StartingOffset, unsigned long long Size)
 {
 int RetVal;
-int VariableID;
+long long VariableID;
 
 	RetVal= GetVariableID(Name, &VariableID);
 
@@ -373,10 +373,10 @@ int VariableID;
 
 
 // Documented in base class
-int CNetPDLStandardVars::GetVariableBuffer(char *Name, unsigned char** ReturnBufferPtr, unsigned int* ReturnBufferSize)
+int CNetPDLStandardVars::GetVariableBuffer(char *Name, unsigned char** ReturnBufferPtr, unsigned long long* ReturnBufferSize)
 {
 int RetVal;
-int VariableID;
+long long VariableID;
 
 	RetVal= GetVariableID(Name, &VariableID);
 

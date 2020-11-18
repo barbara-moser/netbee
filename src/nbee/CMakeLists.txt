@@ -1,20 +1,12 @@
-PROJECT(NETBEE)
+add_library(nbee SHARED)
 
-CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
-
-#NOTE [OM]: temporarily removed the NetVM related files from the build system
-
-# Set source files
-SET(SOURCES
+target_sources(nbee PRIVATE
 	../../include/nbee.h
 	../../include/nbee_initcleanup.h
 	../../include/nbee_netpdlutils.h
-	#../../include/nbee_netvm.h
-	#../../include/nbee_netvmports.h
 	../../include/nbee_packetdecoder.h
 	../../include/nbee_packetdecoderutils.h
 	../../include/nbee_packetdumpfiles.h
-	#../../include/nbee_packetprocess.h
 	../../include/nbee_pxmlreader.h
 	../../include/nbee_packetengine.h
 	../../include/nbee_extractedfieldreader.h
@@ -29,6 +21,7 @@ SET(SOURCES
 	globals/profiling.cpp
 	globals/profiling-functions.h
 	globals/profiling-functions.c
+	globals/pcap_structures.h
 
 	decoder/netpdldecoder.h
 	decoder/netpdldecoder.cpp
@@ -73,29 +66,16 @@ SET(SOURCES
 	misc/initialize.h
 	misc/initialize.cpp
 	misc/update_netpdlfile.cpp
-	#netbee.def
-	misc/resource.rc
-
-	#netvm/netpe.cpp
-	#netvm/netvm.cpp
-	#netvm/netvmbytecode.cpp
-	#netvm/netvmportapplication.cpp
-	#netvm/netvmportbase.cpp
-	#netvm/netvmportlocaladapter.cpp
-	#netvm/netvmportremoteadapter.cpp
 
 	nbpacketengine/nbpacketengine.cpp
 	nbpacketengine/fieldreader.cpp
 	nbpacketengine/nbeepacketengine.h
 	nbpacketengine/nbeefieldreader.h
 	
-	#packetprocessing/packetcapture.cpp
 	packetprocessing/packetdumpfile.h
 	packetprocessing/packetdumpfile.cpp
-	#packetprocessing/packetprocess.cpp
 	packetprocessing/packet_pcapdumpfile.h
 	packetprocessing/packet_pcapdumpfile.cpp
-	#packetprocessing/savefile.c
 
 	utils/asciibuffer.h
 	utils/asciibuffer.cpp
@@ -103,157 +83,37 @@ SET(SOURCES
 	utils/netpdlutils.c
 )
 
-IF(WIN32)
-	SET(XERCES_INCLUDE_DIR ${NETBEE_SOURCE_DIR}/../../../xerces-c/include)
-	SET(XERCES_LIBRARY_DIR ${NETBEE_SOURCE_DIR}/../../../xerces-c/lib)
-	SET(PCRE_INCLUDE_DIR ${NETBEE_SOURCE_DIR}/../../contrib/pcre70/include)
-	SET(PCRE_LIBRARY_DIR ${NETBEE_SOURCE_DIR}/../../contrib/pcre70/lib)
-	SET(XERCES_LIBRARIES xerces-c_3.lib)
-	SET(PCRE_LIBRARIES pcre.lib)
-ELSE(WIN32)
-	IF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-		MESSAGE (STATUS "Mac OS X detected!")
-		SET (CMAKE_C_FLAGS "-fno-common")
-		SET (CMAKE_CXX_FLAGS "-fno-common")
-	ENDIF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-	FIND_PATH(XERCES_INCLUDE_DIR 
-	  NAMES
-		dom/DOM.hpp
-	  PATHS
-  		/usr/local/include
-		/usr/include
-		/opt/local/include
-		/opt/include
-	  PATH_SUFFIXES xercesc)
-
-	FIND_LIBRARY(XERCES_LIBRARY
-	  NAMES
-		xerces-c
-	  PATHS
-		/usr/local/lib
-		/usr/lib
-		/opt/local/lib
-		/opt/lib
-	    ${XERCES_INCLUDE_DIR}/../lib
-	)
-
-
-	  IF(XERCES_LIBRARY)
-	    SET( XERCES_LIBRARIES ${XERCES_LIBRARY} )
-	    SET( XERCES_FOUND "YES" )
-	  ENDIF(XERCES_LIBRARY)
-
-	FIND_PATH(PCRE_INCLUDE_DIR pcre.h
-  		/usr/local/include
-  		/usr/include
-  		/opt/local/include
-  		/opt/include
-	)
-
-	IF(PCRE_INCLUDE_DIR)
-		FIND_LIBRARY(PCRE_LIBRARY
-		  NAMES
-		    pcre
-		    pcrecpp
-		  PATHS
-		    /usr/local/lib
-		    /usr/lib
-		    /opt/local/lib
-		    /opt/lib
-		    ${PCRE_INCLUDE_DIR}/../lib
-		)
-
-
-		  IF(PCRE_LIBRARY)
-		    SET( PCRE_LIBRARIES ${PCRE_LIBRARY} )
-		    SET( PCRE_FOUND "YES" )
-		  ENDIF(PCRE_LIBRARY)
-	ENDIF(PCRE_INCLUDE_DIR)
-ENDIF(WIN32)
-
+find_package(PCAP)
 
 # Default directories for include files
-INCLUDE_DIRECTORIES(
-	${NETBEE_SOURCE_DIR}/../../include
-	${XERCES_INCLUDE_DIR}/../
-	${PCRE_INCLUDE_DIR}
+target_include_directories(nbee PUBLIC
+	${CMAKE_CURRENT_SOURCE_DIR}/../../include
+	${CMAKE_CURRENT_SOURCE_DIR}
 )
 
-# Add libraries that are required for linking
-LINK_LIBRARIES(	${XERCES_LIBRARIES}
-		${PCRE_LIBRARIES}
-		)
-
-# Default directories for linking
-IF(WIN32)
-	LINK_DIRECTORIES( ${NETBEE_SOURCE_DIR}/../../lib )
-	LINK_DIRECTORIES( ${NETBEE_SOURCE_DIR}/../../../WpdPack/Lib )
-	LINK_DIRECTORIES( ${XERCES_LIBRARY_DIR} )
-	LINK_DIRECTORIES( ${PCRE_LIBRARY_DIR} )
-ENDIF(WIN32)
-
-
-IF(WIN32)
-# Default directories for include files
-INCLUDE_DIRECTORIES(
-	${NETBEE_SOURCE_DIR}/../../include
-	${NETBEE_SOURCE_DIR}/../../../WPdPack/Include
-	${XERCES_INCLUDE_DIR}
-	${PCRE_INCLUDE_DIR}
+target_link_libraries(nbee PUBLIC
+	xerces-c
+	pcre
+	$<$<BOOL:${PCAP_FOUND}>:pcap>
+	netbeeOptions
+	nbprotodb
+	nbpflcompiler
+	nbsockutils
+	nbnetvm
+	$<$<AND:$<PLATFORM_ID:Windows>,$<BOOL:${PCAP_FOUND}>>:packet>
+	$<$<PLATFORM_ID:Linux>:${CMAKE_DL_LIBS}>
 )
-ENDIF(WIN32)
+
+target_compile_definitions(nbee PRIVATE $<$<BOOL:${PCAP_FOUND}>:HAVE_PCAP>)
 
 # Platform-specific definitions
-IF(WIN32)
-	ADD_DEFINITIONS(
-		-D_CRT_SECURE_NO_WARNINGS
-		-D_CRT_SECURE_NO_DEPRECATE
-		-D_CRT_NONSTDC_NO_DEPRECATE 
-		-DWIN32_LEAN_AND_MEAN
-		-DNBEE_EXPORTS
-#		-DWPCAP
-		-DHAVE_REMOTE
+if(WIN32)
+	target_compile_definitions(nbee PRIVATE
+		_CRT_SECURE_NO_WARNINGS
+		_CRT_SECURE_NO_DEPRECATE
+		_CRT_NONSTDC_NO_DEPRECATE 
+		WIN32_LEAN_AND_MEAN
+		NBEE_EXPORTS
+		HAVE_REMOTE
 	)
-ENDIF(WIN32)
-
-
-# Add libraries that are required for linking
-IF(WIN32)
-  LINK_LIBRARIES( ${XERCES_LIBRARIES} wpcap.lib packet.lib pcre.lib nbprotodb.lib nbpflcompiler.lib nbsockutils.lib nbnetvm.lib)
-ELSE(WIN32)
-IF(${CMAKE_SYSTEM_NAME} MATCHES "FreeBSD")
-  LINK_LIBRARIES(${XERCES_LIBRARIES} ${PCRE_LIBRARIES} pcap nbprotodb nbpflcompiler nbsockutils nbnetvm)
-ELSE(${CMAKE_SYSTEM_NAME} MATCHES "FreeBSD")
-  LINK_LIBRARIES(${XERCES_LIBRARIES} ${PCRE_LIBRARIES} dl pcap nbprotodb nbpflcompiler nbsockutils nbnetvm)
-ENDIF(${CMAKE_SYSTEM_NAME} MATCHES "FreeBSD")
-ENDIF(WIN32)
-
-
-
-
-# Create output library
-ADD_LIBRARY(
-	nbee
-	SHARED
-	${SOURCES}
-)
-
-
-# Copy generated files in the right place
-IF(WIN32)
-	ADD_CUSTOM_COMMAND(
-		TARGET nbee
-		POST_BUILD
-		COMMAND cp ${CMAKE_CFG_INTDIR}/nbee.dll ../../bin/.
-		COMMAND cp ${CMAKE_CFG_INTDIR}/nbee.lib ../../lib/.
-		COMMAND cp ${CMAKE_CFG_INTDIR}/nbee.exp ../../lib/.
-	)
-ELSE(WIN32)
-	ADD_CUSTOM_COMMAND(
-		TARGET nbee
-		POST_BUILD
-		COMMAND cp ${CMAKE_CFG_INTDIR}/libnbee* ../../bin/.
-	)
-ENDIF(WIN32)
-
-
+endif()

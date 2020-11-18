@@ -1343,7 +1343,7 @@ char *ReturnString;
 					{
 					unsigned char *TempBufferAscii;
 //					void *TempBufferAscii_cast;
-					unsigned int TempBufferAsciiSize;
+					unsigned long long TempBufferAsciiSize;
 					int RetVal;
 
 						RetVal= m_exprHandler->EvaluateExprString(DtlItemInfo->ExprTree, PDMLElement,
@@ -1362,7 +1362,7 @@ char *ReturnString;
 					}
 					else
 					{
-					unsigned int Result;
+					unsigned long long Result;
 					int RetVal;
 
 						RetVal= m_exprHandler->EvaluateExprNumber(DtlItemInfo->ExprTree, PDMLElement, &Result);
@@ -1385,7 +1385,7 @@ char *ReturnString;
 			{
 			struct _nbNetPDLElementIf *DtlItemInfo;
 			int RetVal;
-			unsigned int Result;
+			unsigned long long Result;
 
 				DtlItemInfo= (struct _nbNetPDLElementIf *) NetPDLDtlItem;
 			
@@ -1655,8 +1655,8 @@ int RetVal;
 
 	\note This function has been declared as 'static' because it is called also from other contexts.
 */
-int CPDMLMaker::ScanForFieldRefValue(struct _nbPDMLField *PDMLField, char *ProtoName, char *FieldName, unsigned int *FieldOffset,
-								  unsigned int *FieldSize, char **FieldMask, char *ErrBuf, int ErrBufSize)
+int CPDMLMaker::ScanForFieldRefValue(struct _nbPDMLField *PDMLField, char *ProtoName, char *FieldName, unsigned long long *FieldOffset,
+								  unsigned long long *FieldSize, char **FieldMask, char *ErrBuf, long long ErrBufSize)
 {
 struct _nbPDMLField *Result;
 int RetVal;

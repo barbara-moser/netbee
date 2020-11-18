@@ -164,10 +164,10 @@ int CNetPDLDecoder::DecodePacket(nbNetPDLLinkLayer_t LinkLayerType, int PacketCo
 										const struct pcap_pkthdr *PcapHeader, const unsigned char *PcapPktData)
 {
 	unsigned int CurrentProtoItem, PreviousProtoItem;
-	unsigned int CurrentOffset;
+	unsigned long long CurrentOffset;
 	int RetVal;
-	unsigned int PacketLen;
-	unsigned int BytesToBeDecoded;	// Total number of bytes we have to decode; it is usually equal to
+	unsigned long long PacketLen;
+	unsigned long long BytesToBeDecoded;	// Total number of bytes we have to decode; it is usually equal to
 								// 'snaplen' unless we have a short frame on Ethernet
 
 	// First, let's perform a sanity check to see that the packet size does not exceeds our internal limits

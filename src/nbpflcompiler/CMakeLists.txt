@@ -1,51 +1,41 @@
-PROJECT(NBPFLCOMPILER)
+add_library(nbpflcompiler SHARED)
 
-CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
-INCLUDE(CMakeDependentOption)
+include(CMakeDependentOption)
 
-SET(NETVM_COMMON_DIR ../nbnetvm/netvm_ir)
-SET(NETVM_OPT_DIR ../nbnetvm/jit/opt)
+set(NETVM_COMMON_DIR ../nbnetvm/netvm_ir)
+set(NETVM_OPT_DIR ../nbnetvm/jit/opt)
 
-OPTION(
+option(
 	_DEBUG_SSA
 	"turns on ssa debugging"
 	OFF
 	)
-IF(_DEBUG_SSA)
-	ADD_DEFINITIONS(-D_DEBUG_SSA)
-ENDIF(_DEBUG_SSA)
 
-OPTION(
+option(
 	_DEBUG_OPTIMIZER
 	"turns on optimizer debugging"
 	OFF
 	)
-IF(_DEBUG_OPTIMIZER)
-	ADD_DEFINITIONS(-D_DEBUG_OPTIMIZER)
-ENDIF(_DEBUG_OPTIMIZER)
 
-OPTION(
+option(
 	_DEBUG_REASS
 	"turns on optimizer debugging"
 	OFF
 	)
-IF(_DEBUG_REASS)
-	ADD_DEFINITIONS(-D_DEBUG_REASS)
-ENDIF(_DEBUG_REASS)
 
-OPTION(
+option(
 	_ENABLE_PFLC_PROFILING
 	"Turns on NetPFLCompiler profiling data"
 	OFF
 )
 
-OPTION(
+option(
 	ENABLE_COMPILER_PROFILING
 	"Turns on printing of some informations about the compiler"
 	OFF
 )
 
-OPTION(
+option(
 	ENABLE_FIELD_OPT
 	"Turns off field compact-optimization"
 	ON
@@ -92,46 +82,39 @@ CMAKE_DEPENDENT_OPTION(
   OFF
 )
 
-IF(_ENABLE_PFLC_PROFILING)
-	ADD_DEFINITIONS(-D_ENABLE_PFLC_PROFILING)
-ENDIF(_ENABLE_PFLC_PROFILING)
+target_compile_definitions(nbpflcompiler PRIVATE
+	$<$<BOOL:${_DEBUG_SSA}>:_DEBUG_SSA>
+	$<$<BOOL:${_DEBUG_OPTIMIZER}>:_DEBUG_OPTIMIZER>
+	$<$<BOOL:${_DEBUG_REASS}>:_DEBUG_REASS>
+	$<$<BOOL:${_ENABLE_PFLC_PROFILING}>:_ENABLE_PFLC_PROFILING>
+	$<$<BOOL:${ENABLE_COMPILER_PROFILING}>:ENABLE_COMPILER_PROFILING>
+	$<$<BOOL:${ENABLE_PFLFRONTEND_PROFILING}>:ENABLE_PFLFRONTEND_PROFILING>
+	$<$<BOOL:${ENABLE_PFLFRONTEND_PROFILING_USEC}>:ENABLE_PFLFRONTEND_PROFILING_USEC>
+	$<$<BOOL:${ENABLE_FIELD_OPT}>:ENABLE_FIELD_OPT>
+	$<$<BOOL:${ENABLE_PEG_AND_xpFSA_PROFILING}>:ENABLE_PEG_AND_xpFSA_PROFILING>
+	$<$<BOOL:${ENABLE_PFLFRONTEND_DBGFILES}>:ENABLE_PFLFRONTEND_DBGFILES>
+	$<$<BOOL:${ENABLE_STATISTICS}>:ENABLE_STATISTICS>
+	_PFL_BUILD
+)
 
-IF(ENABLE_COMPILER_PROFILING)
-	ADD_DEFINITIONS(-DENABLE_COMPILER_PROFILING)
-ENDIF(ENABLE_COMPILER_PROFILING)
-
-IF(ENABLE_PFLFRONTEND_PROFILING)
-  ADD_DEFINITIONS(-DENABLE_PFLFRONTEND_PROFILING)
-ENDIF(ENABLE_PFLFRONTEND_PROFILING)
-
-IF(ENABLE_PFLFRONTEND_PROFILING_USEC)
-  ADD_DEFINITIONS(-DENABLE_PFLFRONTEND_PROFILING_USEC)
-ENDIF(ENABLE_PFLFRONTEND_PROFILING_USEC)
-
-IF(ENABLE_FIELD_OPT)
-  ADD_DEFINITIONS(-DENABLE_FIELD_OPT)
-ENDIF(ENABLE_FIELD_OPT)
-
-IF(ENABLE_PEG_AND_xpFSA_PROFILING)
-  ADD_DEFINITIONS(-DENABLE_PEG_AND_xpFSA_PROFILING)
-ENDIF(ENABLE_PEG_AND_xpFSA_PROFILING)
-
-
-IF(ENABLE_PFLFRONTEND_DBGFILES)
-  ADD_DEFINITIONS(-DENABLE_PFLFRONTEND_DBGFILES)
-ENDIF(ENABLE_PFLFRONTEND_DBGFILES)
-
-IF(ENABLE_STATISTICS)
-  ADD_DEFINITIONS(-DSTATISTICS)
-ENDIF(ENABLE_STATISTICS)
-
-MARK_AS_ADVANCED(
+mark_as_advanced(
 	_DEBUG_SSA _DEBUG_OPTIMIZER _ENABLE_PFLC_PROFILING _DEBUG_REASS
 )
 
-ADD_DEFINITIONS(-D_PFL_BUILD)
+# Create grammar files
+add_custom_command(
+		OUTPUT
+			${CMAKE_CURRENT_BINARY_DIR}/scanner.cpp
+			${CMAKE_CURRENT_BINARY_DIR}/parser.cpp
+			${CMAKE_CURRENT_BINARY_DIR}/parser.hpp
+		COMMAND win_flex -i -P"pfl_" -o${CMAKE_CURRENT_BINARY_DIR}/scanner.cpp scanner.l
+		COMMAND win_bison --verbose --defines=${CMAKE_CURRENT_BINARY_DIR}/parser.hpp -p"pfl_" -o${CMAKE_CURRENT_BINARY_DIR}/parser.cpp gramm.y
+		DEPENDS scanner.l gramm.y
+		WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+	)
+
 # Set source files
-SET(SOURCES
+target_sources(nbpflcompiler PRIVATE
 	../nbee/globals/globals.h
 	../nbee/globals/debug.h
 	../nbee/globals/debug.c
@@ -206,8 +189,8 @@ SET(SOURCES
 	netpflfrontend.h
 	node_translation.h
 	node_translation.cpp
-	parser.cpp
-	parser.hpp
+	${CMAKE_CURRENT_BINARY_DIR}/parser.cpp
+	${CMAKE_CURRENT_BINARY_DIR}/parser.hpp
 	pdlparser.cpp
 	pdlparser.h
 	pflexpression.cpp
@@ -222,7 +205,7 @@ SET(SOURCES
 	reassociation_fixer.h
 	${NETVM_COMMON_DIR}/registers.h
 	${NETVM_COMMON_DIR}/registers.cpp
-	scanner.cpp
+	${CMAKE_CURRENT_BINARY_DIR}/scanner.cpp
 	scanner.l
 	statements.cpp
 	statements.h
@@ -246,7 +229,6 @@ SET(SOURCES
 	visit.cpp
 	visit.h
 	
-	
 #SFT files:
 	./sft/sft_defs.h
 	./sft/sft_traits.hpp
@@ -265,104 +247,41 @@ SET(SOURCES
 )
 
 
-# These files are automatically generated, so we tell cmake not to complain if they are not in the source tree
-SET_SOURCE_FILES_PROPERTIES(
-	scanner.cpp 
-	parser.hpp 
-	parser.cpp 
-	PROPERTIES GENERATED true
-	)
-
 # MACOSX
-IF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-	MESSAGE (STATUS "Mac OS X detected!")
-	SET (CMAKE_C_FLAGS "-fno-common")
-	SET (CMAKE_CXX_FLAGS "-fno-common")
-ENDIF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+	message(STATUS "Mac OS X detected!")
+	target_compile_options(nbpflcompiler PRIVATE -fno-common)
+endif()
 
 # Default directories for include files
-INCLUDE_DIRECTORIES(
+target_include_directories(nbpflcompiler PUBLIC
 #Note OM: please leave the src directory in the default include directories, otherwise the fake unistd.h file required by scanner.cpp will not be found on Win32
-	${NBPFLCOMPILER_SOURCE_DIR}
-	${NBPFLCOMPILER_SOURCE_DIR}/sft
-	${NBPFLCOMPILER_SOURCE_DIR}/sft/digraph_stlplus
-	${NBPFLCOMPILER_SOURCE_DIR}/../../include
-	${NBPFLCOMPILER_SOURCE_DIR}/../nbnetvm/netvm_ir
+	${CMAKE_CURRENT_SOURCE_DIR}
+	${CMAKE_CURRENT_BINARY_DIR}
+	${CMAKE_CURRENT_SOURCE_DIR}/sft
+	${CMAKE_CURRENT_SOURCE_DIR}/sft/digraph_stlplus
+	${CMAKE_CURRENT_SOURCE_DIR}/../../include
+	${CMAKE_CURRENT_SOURCE_DIR}/../nbnetvm/netvm_ir
 	${NETVM_OPT_DIR}
 )
 
 # Platform-specific definitions
-IF(WIN32)
-	ADD_DEFINITIONS(
-		-D_CRT_SECURE_NO_WARNINGS
-		-D_CRT_SECURE_NO_DEPRECATE
-		-DWIN32_LEAN_AND_MEAN
-		-DPFLCOMPILER_EXPORTS
+if(WIN32)
+	target_compile_definitions(nbpflcompiler PRIVATE
+		_CRT_SECURE_NO_WARNINGS
+		_CRT_SECURE_NO_DEPRECATE
+		WIN32_LEAN_AND_MEAN
+		PFLCOMPILER_EXPORTS
 	)
-ENDIF(WIN32)
+endif()
 
-
-
-
-# Add libraries that are required for linking
-IF(WIN32)
-#	LINK_LIBRARIES(xerces-c_2.lib pcre.lib nbprotodb.lib)
-	LINK_LIBRARIES(pcre.lib nbprotodb.lib)
-ENDIF(WIN32)
-
-
-# Default directories for linking
-IF(WIN32)
-	LINK_DIRECTORIES(${NBPFLCOMPILER_SOURCE_DIR}/../../lib)
-	LINK_DIRECTORIES(${NBPFLCOMPILER_SOURCE_DIR}/../../contrib/pcre70/lib)
-	LINK_DIRECTORIES(${NBPFLCOMPILER_SOURCE_DIR}/../../../xerces-c/lib)
-ENDIF(WIN32)
-
-
-# Create output library
-ADD_LIBRARY(
-	nbpflcompiler
-	SHARED
-	${SOURCES}
-)
-
-
-# Create grammar files
-ADD_CUSTOM_COMMAND(
-		OUTPUT scanner.cpp parser.cpp parser.hpp
-		COMMAND flex -i -P"pfl_" -oscanner.cpp scanner.l
-		# flex -d: run in debug mode
-		COMMAND bison --verbose -d -p"pfl_" -oparser.cpp gramm.y
-		# bison -t: run in debug mode
-		# This command is required on MacOSX; it is not requiried in Windows
-		DEPENDS scanner.l gramm.y
-		WORKING_DIRECTORY ${NBPFLCOMPILER_SOURCE_DIR}
-	)
-
-# Copy generated files in the right place
-IF(WIN32)
-	ADD_CUSTOM_COMMAND(
-		TARGET nbpflcompiler
-		POST_BUILD
-		COMMAND cp ${CMAKE_CFG_INTDIR}/nbpflcompiler.dll ../../bin/.
-		COMMAND cp ${CMAKE_CFG_INTDIR}/nbpflcompiler.lib ../../lib/.
-		COMMAND cp ${CMAKE_CFG_INTDIR}/nbpflcompiler.exp ../../lib/.
-	)
-ELSE(WIN32)
-	ADD_CUSTOM_COMMAND(
-		TARGET nbpflcompiler
-		POST_BUILD
-		COMMAND cp ${CMAKE_CFG_INTDIR}/libnbpflcompiler* ../../bin/.
-	)
-ENDIF(WIN32)
-
+target_link_libraries(nbpflcompiler PUBLIC netbeeOptions nbprotodb pcre)
 
 # Set additional flags that are compiler-dependent
-IF(WIN32)
-	# In Windows, we have to force "Project -> Properties -> C/C++ -> Language -> "Treat wchar_t as built in type" to "No (/Zc:wchar_t-)"
-	SET_TARGET_PROPERTIES(
+if(WIN32)
+	set_target_properties(
 		nbpflcompiler
 		PROPERTIES
 		COMPILE_FLAGS "/Zc:wchar_t-"
 	)
-ENDIF(WIN32)
+endif()

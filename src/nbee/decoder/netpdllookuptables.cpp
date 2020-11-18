@@ -51,7 +51,7 @@ extern struct _nbNetPDLDatabase *NetPDLDatabase;
 CNetPDLLookupTables::~CNetPDLLookupTables()
 {
 struct _TableEntry *CurrentEntry, *NextEntry;
-int TableID;
+long long TableID;
 int i;
 
 	for (TableID= 0; TableID < m_currNumTables; TableID++)
@@ -115,7 +115,7 @@ int i;
 int CNetPDLLookupTables::CreateTable(struct _nbNetPDLElementLookupTable* LookupTable)
 {
 int TotalEntrySize;
-int TableID;
+long long TableID;
 int i, RetVal;
 struct _nbNetPDLElementKeyData* TempKeyData;
 
@@ -309,7 +309,7 @@ struct _nbNetPDLElementKeyData* TempKeyData;
 
 
 // Documented in base class
-int CNetPDLLookupTables::GetTableID(char* TableName, char *DataName, int *TableID, int *DataID)
+int CNetPDLLookupTables::GetTableID(char* TableName, char *DataName, long long* TableID, unsigned long long* DataID)
 {
 int TableNumber, DataNumber;
 
@@ -360,7 +360,7 @@ int TableNumber, DataNumber;
 
 
 // Documented in base class
-int CNetPDLLookupTables::AddTableEntry(int TableID, struct _nbLookupTableKey KeyList[], struct _nbLookupTableData DataList[], int TimestampSec, 
+int CNetPDLLookupTables::AddTableEntry(long long TableID, struct _nbLookupTableKey KeyList[], struct _nbLookupTableData DataList[], int TimestampSec, 
 										int KeysHaveMasks, nbNetPDLUpdateLookupTableAddValidityTypes_t 	Validity, int KeepTime, int HitTime, int NewHitTime)
 {
 int i;
@@ -620,7 +620,7 @@ int i;
 
 
 // Documented in base class
-int CNetPDLLookupTables::LookupForTableEntry(int TableID, struct _nbLookupTableKey KeyList[], int TimestampSec, int MatchExactEntries, int MatchMaskEntries, int GetFirstMatch)
+int CNetPDLLookupTables::LookupForTableEntry(long long TableID, struct _nbLookupTableKey KeyList[], int TimestampSec, int MatchExactEntries, int MatchMaskEntries, int GetFirstMatch)
 {
 int i;
 struct _TableEntry *CurrentEntry, *NextEntry;
@@ -790,7 +790,7 @@ struct _TableEntry *CurrentEntry, *NextEntry;
 
 
 // Documented in base class
-int CNetPDLLookupTables::LookupAndUpdateTableEntry(int TableID, struct _nbLookupTableKey KeyList[], int TimestampSec)
+int CNetPDLLookupTables::LookupAndUpdateTableEntry(long long TableID, struct _nbLookupTableKey KeyList[], int TimestampSec)
 {
 int RetVal;
 
@@ -917,7 +917,7 @@ int RetVal;
 
 
 // Documented in base class
-int CNetPDLLookupTables::GetTableDataBuffer(int TableID, int DataID, unsigned int StartAt, unsigned int Size, unsigned char **DataValue, unsigned int *DataSize)
+int CNetPDLLookupTables::GetTableDataBuffer(long long TableID, long long DataID, unsigned long long StartAt, unsigned long long Size, unsigned char **DataValue, unsigned long long* DataSize)
 {
 int DataOffset;
 
@@ -954,7 +954,7 @@ int DataOffset;
 
 
 // Documented in base class
-int CNetPDLLookupTables::GetTableDataNumber(int TableID, int DataID, unsigned int* DataValue)
+int CNetPDLLookupTables::GetTableDataNumber(long long TableID, long long DataID, unsigned long long* DataValue)
 {
 char *BufferDataValue;
 int DataOffset;
@@ -994,7 +994,7 @@ int DataOffset;
 
 
 // Documented in base class
-int CNetPDLLookupTables::SetTableDataBuffer(int TableID, int DataID, unsigned char *DataValue, unsigned int StartingOffset, unsigned int DataSize)
+int CNetPDLLookupTables::SetTableDataBuffer(long long TableID, long long DataID, unsigned char *DataValue, unsigned long long StartingOffset, unsigned long long DataSize)
 {
 char* FieldStartingPtr;
 char* PaddingStartingPtr;
@@ -1034,7 +1034,7 @@ int PaddingSize;
 
 
 // Documented in base class
-int CNetPDLLookupTables::SetTableDataNumber(int TableID, int DataID, unsigned int DataValue)
+int CNetPDLLookupTables::SetTableDataNumber(long long TableID, long long DataID, unsigned long long DataValue)
 {
 char* FieldStartingPtr;
 char* PaddingStartingPtr;
@@ -1080,7 +1080,7 @@ int IntegerSize;
 
 
 // Documented in base class
-int CNetPDLLookupTables::PurgeTableEntry(int TableID, struct _nbLookupTableKey KeyList[], int MaskedEntry, int TimestampSec)
+int CNetPDLLookupTables::PurgeTableEntry(long long TableID, struct _nbLookupTableKey KeyList[], int MaskedEntry, int TimestampSec)
 {
 int RetVal;
 
@@ -1156,7 +1156,7 @@ int RetVal;
 
 
 // Documented in base class
-int CNetPDLLookupTables::ObsoleteTableEntry(int TableID, struct _nbLookupTableKey KeyList[], int MaskedEntry, int TimestampSec)
+int CNetPDLLookupTables::ObsoleteTableEntry(long long TableID, struct _nbLookupTableKey KeyList[], int MaskedEntry, int TimestampSec)
 {
 int RetVal;
 
@@ -1185,7 +1185,7 @@ int RetVal;
 }
 
 
-int CNetPDLLookupTables::ScanTableEntries(int TableID, int ScanExactEntries, struct _nbLookupTableKey** KeyList, struct _nbLookupTableData** DataList, void** CurrentElementHandler)
+int CNetPDLLookupTables::ScanTableEntries(long long TableID, int ScanExactEntries, struct _nbLookupTableKey** KeyList, struct _nbLookupTableData** DataList, void** CurrentElementHandler)
 {
 static struct _TableEntry* CurrentTableEntry;
 int i;
@@ -1236,7 +1236,7 @@ int i;
 }
 
 
-int CNetPDLLookupTables::GetTableFirstEntry(int TableID, int GetExactEntry, struct _nbLookupTableKey** KeyList, struct _nbLookupTableData** DataList)
+int CNetPDLLookupTables::GetTableFirstEntry(long long TableID, int GetExactEntry, struct _nbLookupTableKey** KeyList, struct _nbLookupTableData** DataList)
 {
 struct _TableEntry* CurrentTableEntry;
 int i;
@@ -1274,7 +1274,7 @@ int i;
 }
 
 
-int CNetPDLLookupTables::GetTableMatchingEntry(int TableID, struct _nbLookupTableKey** KeyList, struct _nbLookupTableData** DataList)
+int CNetPDLLookupTables::GetTableMatchingEntry(long long TableID, struct _nbLookupTableKey** KeyList, struct _nbLookupTableData** DataList)
 {
 struct _TableEntry* CurrentTableEntry;
 int i;
@@ -1317,7 +1317,7 @@ int i;
 }
 
 
-int CNetPDLLookupTables::GetTableNextMatchingEntry(int TableID, struct _nbLookupTableKey** KeyList, struct _nbLookupTableData** DataList)
+int CNetPDLLookupTables::GetTableNextMatchingEntry(long long TableID, struct _nbLookupTableKey** KeyList, struct _nbLookupTableData** DataList)
 {
 int RetVal;
 int TimestampSec;
@@ -1360,7 +1360,7 @@ int TimestampSec;
 	\param TableID: ID of the table where there is the entry that has to be deleted.
 	This value is returned back by the Create() method.
 */
-void CNetPDLLookupTables::MoveNewExactEntryOnTopOfList(int TableID)
+void CNetPDLLookupTables::MoveNewExactEntryOnTopOfList(long long TableID)
 {
 struct _TableEntry *OldFirstTableEntry;
 
@@ -1394,7 +1394,7 @@ struct _TableEntry *OldFirstTableEntry;
 	\param TableID: ID of the table where there is the entry that has to be deleted.
 	This value is returned back by the Create() method.
 */
-void CNetPDLLookupTables::MoveNewMaskEntryOnTopOfList(int TableID)
+void CNetPDLLookupTables::MoveNewMaskEntryOnTopOfList(long long TableID)
 {
 struct _TableEntry *OldFirstTableEntry;
 
@@ -1429,7 +1429,7 @@ struct _TableEntry *OldFirstTableEntry;
 
 	\param MatchingEntry: pointer to the entry that has to be moved on top of the list.
 */
-void CNetPDLLookupTables::MoveExistingExactEntryOnTopOfList(int TableID, struct _TableEntry *MatchingEntry)
+void CNetPDLLookupTables::MoveExistingExactEntryOnTopOfList(long long TableID, struct _TableEntry *MatchingEntry)
 {
 struct _TableEntry *OldFirstTableEntry, *OldPreviousMatchingTableEntry, *OldNextMatchingTableEntry;
 
@@ -1473,7 +1473,7 @@ struct _TableEntry *OldFirstTableEntry, *OldPreviousMatchingTableEntry, *OldNext
 
 	\param MatchingEntry: pointer to the entry that has to be moved on top of the list.
 */
-void CNetPDLLookupTables::MoveExistingMaskEntryOnTopOfList(int TableID, struct _TableEntry *MatchingEntry)
+void CNetPDLLookupTables::MoveExistingMaskEntryOnTopOfList(long long TableID, struct _TableEntry *MatchingEntry)
 {
 struct _TableEntry *OldFirstTableEntry, *OldPreviousMatchingTableEntry, *OldNextMatchingTableEntry;
 
@@ -1517,7 +1517,7 @@ struct _TableEntry *OldFirstTableEntry, *OldPreviousMatchingTableEntry, *OldNext
 
 	\param MatchingEntry: pointer to the entry that has to be deleted.
 */
-void CNetPDLLookupTables::PurgeExistingExactEntry(int TableID, struct _TableEntry *MatchingEntry)
+void CNetPDLLookupTables::PurgeExistingExactEntry(long long TableID, struct _TableEntry *MatchingEntry)
 {
 struct _TableEntry *OldFirstVoidTableEntry;
 struct _TableEntry *OldPreviousMatchingTableEntry;
@@ -1565,7 +1565,7 @@ struct _TableEntry *OldNextMatchingTableEntry;
 
 	\param MatchingEntry: pointer to the entry that has to be deleted.
 */
-void CNetPDLLookupTables::PurgeExistingMaskEntry(int TableID, struct _TableEntry *MatchingEntry)
+void CNetPDLLookupTables::PurgeExistingMaskEntry(long long TableID, struct _TableEntry *MatchingEntry)
 {
 struct _TableEntry *OldFirstVoidTableEntry;
 struct _TableEntry *OldPreviousMatchingTableEntry;
@@ -1644,7 +1644,7 @@ int i;
 void CNetPDLLookupTables::DoGarbageCollection(int TimestampSec, int AggressiveScan)
 {
 struct _TableEntry *CurrentEntry, *PreviousEntry;
-int TableID;
+long long TableID;
 //int Timestamp;
 //int Lifetime;
 int Result;
@@ -1712,7 +1712,7 @@ int Result;
 	\return nbSUCCESS if the entry has been deleted, nbWARNING if the entry is still valid and
 	cannot be deleted this time.
 */
-int CNetPDLLookupTables::CheckAndDeleteIfOldExactEntry(int TableID, struct _TableEntry *CurrentEntry, int TimestampSec)
+int CNetPDLLookupTables::CheckAndDeleteIfOldExactEntry(long long TableID, struct _TableEntry *CurrentEntry, int TimestampSec)
 {
 int Timestamp;
 int Lifetime;
@@ -1809,7 +1809,7 @@ int Lifetime;
 	\return nbSUCCESS if the entry has been deleted, nbWARNING if the entry is still valid and
 	cannot be deleted this time.
 */
-int CNetPDLLookupTables::CheckAndDeleteIfOldMaskEntry(int TableID, struct _TableEntry *CurrentEntry, int TimestampSec)
+int CNetPDLLookupTables::CheckAndDeleteIfOldMaskEntry(long long TableID, struct _TableEntry *CurrentEntry, int TimestampSec)
 {
 int Timestamp;
 int Lifetime;
@@ -1850,7 +1850,7 @@ int Lifetime;
 
 
 // Documented in base class
-struct _nbLookupTableKey* CNetPDLLookupTables::GetStructureForTableKey(int TableID)
+struct _nbLookupTableKey* CNetPDLLookupTables::GetStructureForTableKey(long long TableID)
 {
 	return m_tableList[TableID].ExportedKeyList;
 };
@@ -1858,7 +1858,7 @@ struct _nbLookupTableKey* CNetPDLLookupTables::GetStructureForTableKey(int Table
 
 
 // Documented in base class
-struct _nbLookupTableData* CNetPDLLookupTables::GetStructureForTableData(int TableID)
+struct _nbLookupTableData* CNetPDLLookupTables::GetStructureForTableData(long long TableID)
 {
 	return m_tableList[TableID].ExportedDataList;
 };
@@ -1867,7 +1867,7 @@ struct _nbLookupTableData* CNetPDLLookupTables::GetStructureForTableData(int Tab
 
 #ifdef LOOKUPTABLE_PROFILER
 // Value: +1 if we need to add an item, '-1' if we're purging an item.
-void CNetPDLLookupTables::UpdateProfilerCounters(int TableID, int IsExact, int Value)
+void CNetPDLLookupTables::UpdateProfilerCounters(long long TableID, int IsExact, int Value)
 {
 int Bin;
 
@@ -1942,7 +1942,7 @@ int Bin;
 }
 
 
-void CNetPDLLookupTables::PrintTableStats(int TableID)
+void CNetPDLLookupTables::PrintTableStats(long long TableID)
 {
 int i;
 
@@ -1976,14 +1976,14 @@ int i;
 	printf("\n\n");
 }
 
-int CNetPDLLookupTables::GetNumberOfEntries(int TableID)
+long long CNetPDLLookupTables::GetNumberOfEntries(long long TableID)
 {
 	return m_tableList[TableID].CurrentNumberOfExactEntries;
 }
 #endif
 
 #ifndef LOOKUPTABLE_PROFILER
-int CNetPDLLookupTables::GetNumberOfEntries(int TableID)
+long long CNetPDLLookupTables::GetNumberOfEntries(long long TableID)
 {
 	printf("Error: nbee.dll must be compiled with LOOKUPTABLE define for using GetNumberOfEntries\n");
 	return nbFAILURE;
@@ -1991,7 +1991,7 @@ int CNetPDLLookupTables::GetNumberOfEntries(int TableID)
 #endif
 
 #ifdef DEBUG_LOOKUPTABLE
-void CNetPDLLookupTables::PrintEntireTable(int TableID, int IsExact, int TimestampSec)
+void CNetPDLLookupTables::PrintEntireTable(long long TableID, int IsExact, int TimestampSec)
 {
 struct _TableEntry *CurrentEntry;
 int i;
@@ -2028,7 +2028,7 @@ int i;
 }
 
 
-void CNetPDLLookupTables::PrintTableEntry(int TableID, struct _TableEntry *CurrentEntry, char *Message)
+void CNetPDLLookupTables::PrintTableEntry(long long TableID, struct _TableEntry *CurrentEntry, char *Message)
 {
 unsigned char* FieldStartingOffset;
 

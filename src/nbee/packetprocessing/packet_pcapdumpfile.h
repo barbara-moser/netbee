@@ -4,15 +4,13 @@
 /*                                                                           */
 /*****************************************************************************/
 
-
-
 #pragma once
-
 
 #include "packetdumpfile.h"
 #include <nbee_packetdumpfiles.h>
-
-
+#ifdef HAVE_PCAP
+#include <pcap.h>
+#endif
 
 /*!
 	\brief This class implements some basic features that are requred to manage dump files, with indexing enabled.
@@ -44,8 +42,10 @@ private:
 	int m_isFileNew;
 	int m_createIndexing;
 
+#ifdef HAVE_PCAP
 	pcap_t *m_pcapHandle;
 	pcap_dumper_t *m_pcapDumpFileHandle;
+#endif
 
 	//! Contains the packet data, as read from the file
 	unsigned char m_packetBuffer[10000];

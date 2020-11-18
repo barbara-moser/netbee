@@ -136,7 +136,7 @@ namespace jit {
 			static LoadType *make_load(uint16_t bbID, MIRNode::RegType loadReg);
 			// ------ END OF INTERFACE REQUIRED BY THE CONSTANT PROPAGATION ALGORITHM -------------------
 
-			virtual uint32_t get_defined_count();
+			virtual size_t get_defined_count();
 			
 //			virtual void set_preferred_size(operand_size_t size);
 			

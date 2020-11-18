@@ -509,7 +509,7 @@ emit_class_declaration()
 static void
 emit_state ()
 {
-	int i, j;
+	size_t i, j;
 
 	output ("typedef struct %s_MBState MBState;\n", PREFIX);
 	output ("struct %s_MBState {\n", PREFIX);
@@ -805,7 +805,7 @@ compute_kids (string ts, Tree *tree, int *n)
 static void
 emit_kids ()
 {
-	int i, j, c, n; //, *si;
+	size_t i, j, c, n; //, *si;
 	//char **sa;
 
 	output ("int\n");
@@ -873,7 +873,7 @@ emit_kids ()
 			if ( sa[j] == k) // !strcmp (sa [j], k))
 				break;
 
-		si [i++] = j;
+		si [i++] = static_cast<int>(j);
 		if (j == c)
 			sa [c++] = k;
 	}
@@ -1029,7 +1029,7 @@ compute_nonterms (Tree *tree)
 static void
 emit_vardefs ()
 {
-	int i, j, c, n; //, *si;
+	size_t i, j, c, n; //, *si;
 	//char **sa;
 
 	if (predefined_terms) {
@@ -1102,7 +1102,7 @@ emit_vardefs ()
 			if (sa[j] == s) //!strcmp (sa [j], s))
 				break;
 
-		si [i++] = j;
+		si [i++] = static_cast<int>(j);
 		if (j == c) {
 			output ("static const uint16_t netvm_burg_nts_%d [] = { %s0 };\n", c, s.c_str());
 			sa [c++] = s;
@@ -1242,7 +1242,7 @@ static char*
 add_class_suffix(const char* class_name)
 {
 	char *res;
-	int len = strlen(class_name) + 3;
+	auto len = strlen(class_name) + 3;
 	res = (char *) malloc(len * sizeof(char));
 	strncpy(res, class_name, len);
 

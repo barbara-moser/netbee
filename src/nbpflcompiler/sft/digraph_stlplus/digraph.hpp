@@ -210,7 +210,7 @@ namespace stlplus
 
     // a value representing an unknown offset
     // Note that it's static so use in the form digraph<NT,AT>::npos()
-    static unsigned npos(void);
+    static size_t npos(void);
 
     //////////////////////////////////////////////////////////////////////////
     // Constructors, destructors and copies
@@ -233,7 +233,7 @@ namespace stlplus
 
     // tests for the number of nodes and the special test for zero nodes
     bool empty(void) const;
-    unsigned size(void) const;
+    size_t size(void) const;
 
     // add a new node and return its iterator
     iterator insert(const NT& node_data);
@@ -252,24 +252,24 @@ namespace stlplus
 
     // access the inputs of this node
     // the fanin is the number of inputs and the inputs are accessed using an index from 0..fanin-1
-    unsigned fanin(const_iterator) const
+    size_t fanin(const_iterator) const
       throw(wrong_object,null_dereference,end_dereference);
-    unsigned fanin(iterator)
+    size_t fanin(iterator)
       throw(wrong_object,null_dereference,end_dereference);
-    const_arc_iterator input(const_iterator, unsigned) const
+    const_arc_iterator input(const_iterator, size_t) const
       throw(wrong_object,null_dereference,end_dereference,std::out_of_range);
-    arc_iterator input(iterator, unsigned)
+    arc_iterator input(iterator, size_t)
       throw(wrong_object,null_dereference,end_dereference,std::out_of_range);
 
     // access the outputs of this node
     // the fanout is the number of outputs and the outputs are accessed using an index from 0..fanout-1
-    unsigned fanout(const_iterator) const
+    size_t fanout(const_iterator) const
       throw(wrong_object,null_dereference,end_dereference);
-    unsigned fanout(iterator)
+    size_t fanout(iterator)
       throw(wrong_object,null_dereference,end_dereference);
-    const_arc_iterator output(const_iterator, unsigned) const
+    const_arc_iterator output(const_iterator, size_t) const
       throw(wrong_object,null_dereference,end_dereference,std::out_of_range);
-    arc_iterator output(iterator, unsigned)
+    arc_iterator output(iterator, size_t)
       throw(wrong_object,null_dereference,end_dereference,std::out_of_range);
 
     const_arc_vector inputs(const_iterator) const
@@ -283,14 +283,14 @@ namespace stlplus
 
     // find the output index of an arc which goes from this node
     // returns digraph<NT,AT>::npos if the arc is not an output of from
-    unsigned output_offset(const_iterator from, const_arc_iterator arc) const
+    size_t output_offset(const_iterator from, const_arc_iterator arc) const
       throw(wrong_object,null_dereference,end_dereference);
-    unsigned output_offset(iterator from, arc_iterator arc)
+    size_t output_offset(iterator from, arc_iterator arc)
       throw(wrong_object,null_dereference,end_dereference);
     // ditto for an input arc
-    unsigned input_offset(const_iterator to, const_arc_iterator arc) const
+    size_t input_offset(const_iterator to, const_arc_iterator arc) const
       throw(wrong_object,null_dereference,end_dereference);
-    unsigned input_offset(iterator to, arc_iterator arc)
+    size_t input_offset(iterator to, arc_iterator arc)
       throw(wrong_object,null_dereference,end_dereference);
 
     //////////////////////////////////////////////////////////////////////////
@@ -302,7 +302,7 @@ namespace stlplus
     // Of course, the arc data can be accessed by simply dereferencing the iterator
 
     bool arc_empty (void) const;
-    unsigned arc_size(void) const;
+    size_t arc_size(void) const;
     arc_iterator arc_insert(iterator from, iterator to, const AT& arc_data = AT())
       throw(wrong_object,null_dereference,end_dereference);
     arc_iterator arc_erase(arc_iterator)

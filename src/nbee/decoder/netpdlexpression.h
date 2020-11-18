@@ -33,18 +33,18 @@ public:
 	virtual ~CNetPDLExpression();
 
 	// Evaluating methods
-	int EvaluateExprNumber(struct _nbNetPDLExprBase *ExprNode, _nbPDMLField *PDMLStartField, unsigned int *Result);
-	int EvaluateExprString(struct _nbNetPDLExprBase *ExprNode, _nbPDMLField *PDMLStartField, unsigned char **ResultString, unsigned int *ResultStringLen);
-	int EvaluateSwitch(struct _nbNetPDLElementSwitch *SwitchNodeInfo, _nbPDMLField *PDMLStartField, struct _nbNetPDLElementCase **Result);
+	long long EvaluateExprNumber(struct _nbNetPDLExprBase *ExprNode, _nbPDMLField *PDMLStartField, unsigned long long* Result);
+	long long EvaluateExprString(struct _nbNetPDLExprBase *ExprNode, _nbPDMLField *PDMLStartField, unsigned char **ResultString, unsigned long long* ResultStringLen);
+	long long EvaluateSwitch(struct _nbNetPDLElementSwitch *SwitchNodeInfo, _nbPDMLField *PDMLStartField, struct _nbNetPDLElementCase **Result);
 
-	int EvaluateAssignVariable(struct _nbNetPDLElementAssignVariable *AssignVariableElement, struct _nbPDMLField *PDMLStartField);
-	int EvaluateAssignLookupTable(struct _nbNetPDLElementAssignLookupTable *LookupTable, struct _nbPDMLField *PDMLStartField);
-	int EvaluateLookupTable(struct _nbNetPDLElementUpdateLookupTable *LookupTableEntry, struct _nbPDMLField *PDMLStartField);
+	long long EvaluateAssignVariable(struct _nbNetPDLElementAssignVariable *AssignVariableElement, struct _nbPDMLField *PDMLStartField);
+	long long EvaluateAssignLookupTable(struct _nbNetPDLElementAssignLookupTable *LookupTable, struct _nbPDMLField *PDMLStartField);
+	long long EvaluateLookupTable(struct _nbNetPDLElementUpdateLookupTable *LookupTableEntry, struct _nbPDMLField *PDMLStartField);
 
 private:
-	int GetOperandBuffer(struct _nbNetPDLExprBase *OperandBase, struct _nbPDMLField *PDMLStartField, 
-								  unsigned char **BufferValue, char **BufferMask, unsigned int *BufferMaxSize);
-	int GetOperandNumber(struct _nbNetPDLExprBase *OperandBase, struct _nbPDMLField *PDMLStartField, unsigned int *ResultValue);
+	long long GetOperandBuffer(struct _nbNetPDLExprBase *OperandBase, struct _nbPDMLField *PDMLStartField, 
+								  unsigned char **BufferValue, char **BufferMask, unsigned long long* BufferMaxSize);
+	long long GetOperandNumber(struct _nbNetPDLExprBase *OperandBase, struct _nbPDMLField *PDMLStartField, unsigned long long* ResultValue);
 
 	//! Pointer to the run-time variables managed by the NetPDL engine
 	CNetPDLVariables *m_netPDLVariables;

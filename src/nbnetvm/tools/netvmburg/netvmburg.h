@@ -34,7 +34,7 @@ typedef struct _NonTerm NonTerm;
 
 struct _NonTerm {
 	std::string* name;
-	int number;
+	size_t number;
 	rule_list_t rules; /* rules with this nonterm on the left side */
 	rule_list_t chain;
 	bool reached;

@@ -163,7 +163,7 @@ class DiGraph
 			 * \param y reference to second edge
 			 * \return true if x comes before y ???  
 			 */
-			bool operator()(const GraphEdge &x, const GraphEdge &y)
+			bool operator()(const GraphEdge &x, const GraphEdge &y) const
 			{				
 				if (x.From.Id >= y.From.Id)
 					return false;
@@ -385,7 +385,7 @@ class DiGraph
 		class NodeIterator
 		{
 			DiGraph<T>& _dg; //!< Graph on which we iterate
-			uint32_t		_i; //!< index in vector of nodes
+			size_t		_i; //!< index in vector of nodes
 
 		public:
 
@@ -515,7 +515,7 @@ class DiGraph
 		class SortedIterator
 		{
 			DiGraph<T>& _dg;
-			uint32_t		_i;
+			size_t		_i;
 			public:
 				typedef typename DiGraph<T>::GraphNode* value_type;
 				typedef ptrdiff_t difference_type;
@@ -683,8 +683,8 @@ class DiGraph
 
 		virtual ~DiGraph()
 		{
-			uint32_t size = m_NodeList.size();
-			for (uint32_t i = 0; i < size; i++)
+			auto size = m_NodeList.size();
+			for (decltype(size) i = 0; i < size; i++)
 				delete m_NodeList[i];
 		}
 
@@ -695,9 +695,9 @@ class DiGraph
 		  */
 		void ResetVisited(void)
 		{
-			uint32_t size = m_NodeList.size();
+			auto size = m_NodeList.size();
 
-			for (uint32_t i = 0; i < size; i++)
+			for (decltype(size) i = 0; i < size; i++)
 			{
 				if (m_NodeList[i] != NULL)
 					m_NodeList[i]->Visited = false;

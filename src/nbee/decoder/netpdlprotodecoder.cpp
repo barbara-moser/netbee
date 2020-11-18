@@ -49,25 +49,13 @@ extern struct _PluginList PluginList[];
 */
 CNetPDLProtoDecoder::CNetPDLProtoDecoder(CNetPDLVariables *NetPDLVars, CNetPDLExpression *ExprHandler, 
 										CPDMLMaker *PDMLMaker, CPSMLMaker *PSMLMaker, char *ErrBuf, int ErrBufSize)
-{
-	m_netPDLVariables= NetPDLVars;
-	m_exprHandler= ExprHandler;
-	m_PDMLMaker= PDMLMaker;
-	m_PSMLMaker= PSMLMaker;
-
-	// Store internally the pointer to the error buffer. This buffer belongs to the class that creates this one.
-	m_errbuf= ErrBuf;
-	m_errbufSize= ErrBufSize;
-}
-
-
-
-//! Default destructor
-CNetPDLProtoDecoder::~CNetPDLProtoDecoder()
-{
-}
-
-
+: m_netPDLVariables(NetPDLVars)
+, m_exprHandler(ExprHandler)
+, m_PDMLMaker(PDMLMaker)
+, m_PSMLMaker(PSMLMaker)
+, m_errbuf(ErrBuf)
+, m_errbufSize(ErrBufSize)
+{}
 
 /*!
 	\brief It updates the general variables in order to be able to decode a new protocol
@@ -87,10 +75,10 @@ void CNetPDLProtoDecoder::Initialize(int myCurrentProtoItem, const struct pcap_p
 {
 	// initialize class global variables
 	m_currentProtoItem= myCurrentProtoItem;
-	m_pcapHeader= PcapHeader;
+	m_pcapHeader = PcapHeader;
 
 	// At the beginning, the pointer to the current PDML fragment is NULL
-	m_PDMLProtoItem= NULL;
+	m_PDMLProtoItem= nullptr;
 }
 
 
@@ -117,7 +105,7 @@ void CNetPDLProtoDecoder::Initialize(int myCurrentProtoItem, const struct pcap_p
 	the packet because the packet buffer ended, e.g. in case of a application-layer message split across
 	several packets). In this case we must continue the parsing, withough raising an error.
 */
-int CNetPDLProtoDecoder::DecodeProto(const unsigned char *Packet, bpf_u_int32 SnapLen, bpf_u_int32 Offset)
+int CNetPDLProtoDecoder::DecodeProto(const unsigned char *Packet, uint64_t SnapLen, uint64_t Offset)
 {
 struct _nbNetPDLElementExecuteX *BeforeElement, *AfterElement;
 struct _nbNetPDLElementBase *FirstFieldElement;
@@ -134,12 +122,11 @@ int RetVal;
 
 	while(BeforeElement)
 	{
-	int RetVal;
-	unsigned int Result= 1;
+		unsigned long long Result= 1;
 
 		if (BeforeElement->WhenExprTree)
 		{
-			RetVal= m_exprHandler->EvaluateExprNumber(BeforeElement->WhenExprTree, NULL, &Result);
+			RetVal= m_exprHandler->EvaluateExprNumber(BeforeElement->WhenExprTree, nullptr, &Result);
 
 			if (RetVal != nbSUCCESS)
 				return RetVal;
@@ -160,7 +147,7 @@ int RetVal;
 	// Create a new PDML header. This will be the root element that will keep all the fields
 	// belonging to the current protocol
 	m_PDMLProtoItem= m_PDMLMaker->HeaderElementInitialize(Offset, m_currentProtoItem);
-	if (m_PDMLProtoItem == NULL)
+	if (m_PDMLProtoItem == nullptr)
 		return nbFAILURE;
 
 	// Set to zero the number of bytes we have already decoded within the current protocol
@@ -170,7 +157,7 @@ int RetVal;
 	int LoopCtrl= nbNETPDL_ID_LOOPCTRL_NONE;
 
 	// Decode all the fields contained in this header
-	RetVal= DecodeFields(FirstFieldElement, SnapLen - 1, NULL /* No parent */, &LoopCtrl, &Len);
+	RetVal= DecodeFields(FirstFieldElement, SnapLen - 1, nullptr /* No parent */, &LoopCtrl, &Len);
 
 	if (RetVal != nbSUCCESS)
 	{
@@ -216,14 +203,14 @@ int RetVal;
 	// If PSML creation is required
 	if (m_PSMLMaker)
 	{
-	unsigned int CurrentOffset;
+	unsigned long long CurrentOffset;
 
 		m_netPDLVariables->GetVariableNumber(m_netPDLVariables->m_defaultVarList.CurrentOffset, &CurrentOffset);
 
 		// Update the summary view
 		// Please note that this method requires the caplen (instead of FrameLength) as 3rd parameter
-		RetVal= m_PSMLMaker->AddHeaderFragment(m_PDMLProtoItem, m_currentProtoItem, 
-					NULL, CurrentOffset, m_pcapHeader->caplen);
+		RetVal= m_PSMLMaker->AddHeaderFragment(m_PDMLProtoItem, m_currentProtoItem,
+					nullptr, CurrentOffset, m_pcapHeader->caplen);
 
 		if (RetVal != nbSUCCESS)
 			return RetVal;
@@ -235,7 +222,7 @@ int RetVal;
 	while(AfterElement)
 	{
 	int RetVal;
-	unsigned int Result= 1;
+	unsigned long long Result= 1;
 
 		if (AfterElement->WhenExprTree)
 		{
@@ -262,45 +249,14 @@ int RetVal;
 
 
 
-int CNetPDLProtoDecoder::DecodeBlock(struct _nbNetPDLElementBlock *BlockElement, unsigned int MaxOffsetToBeDecoded, struct _nbPDMLField *PDMLParent, int *LoopCtrl/*, int *Len*/)
+int CNetPDLProtoDecoder::DecodeBlock(struct _nbNetPDLElementBlock *BlockElement, unsigned long long MaxOffsetToBeDecoded, struct _nbPDMLField *PDMLParent, int *LoopCtrl/*, int *Len*/)
 {
-//struct _nbNetPDLElementExecuteX *BeforeElement, *AfterElement;
 struct _nbNetPDLElementBase *FirstField;
 struct _nbPDMLField *PDMLElement;
-unsigned int StartingOffset;
-int RetVal;
+unsigned long long StartingOffset;
+long long RetVal;
 unsigned int BlockLen;
 int ReturnCode= nbSUCCESS;
-
-/*
-	// Let's execute 'before' code (if it exists)
-	BeforeElement= NetPDLDatabase->ProtoList[m_currentProtoItem]->FirstExecuteBefore;
-
-	while(BeforeElement)
-	{
-	int RetVal;
-	int Result= 1;
-
-		if (BeforeElement->WhenExprTree)
-		{
-			RetVal= m_exprHandler->EvaluateExprNumber(BeforeElement->WhenExprTree, NULL, &Result);
-
-			if (RetVal != nbSUCCESS)
-				return RetVal;
-		}
-
-		if (Result)
-		{
-			RetVal= ExecuteProtoCode(nbNETPDL_GET_ELEMENT(NetPDLDatabase, BeforeElement->FirstChild));
-
-			if (RetVal != nbSUCCESS)
-				return RetVal;
-		}
-
-		// We may even have to execute several sections (if more 'when' attributes matches)
-		BeforeElement= BeforeElement->NextExecuteElement;
-	}
-*/
 
 	m_netPDLVariables->GetVariableNumber(m_netPDLVariables->m_defaultVarList.CurrentOffset, &StartingOffset);
 
@@ -323,7 +279,7 @@ int ReturnCode= nbSUCCESS;
 
 	if (BlockLen > 0)
 	{
-	unsigned int NextFieldOffset;
+	unsigned long long NextFieldOffset;
 
 		// Update the common fields of a PDML element (name, longname, ...)
 		RetVal= m_PDMLMaker->PDMLBlockElementUpdate(PDMLElement, BlockElement, BlockLen, StartingOffset);
@@ -352,36 +308,6 @@ int ReturnCode= nbSUCCESS;
 	else
 		m_PDMLMaker->PDMLElementDiscard(PDMLElement);
 
-
-/*
-	// Let's execute 'after' code (if it exists)
-	AfterElement= NetPDLDatabase->ProtoList[m_currentProtoItem]->FirstExecuteAfter;
-
-	while(AfterElement)
-	{
-	int RetVal;
-	int Result= 1;
-
-		if (AfterElement->WhenExprTree)
-		{
-			RetVal= m_exprHandler->EvaluateExprNumber(AfterElement->WhenExprTree, m_PDMLProtoItem->FirstField, &Result);
-
-			if (RetVal != nbSUCCESS)
-				return RetVal;
-		}
-
-		if (Result)
-		{
-			RetVal= ExecuteProtoCode(nbNETPDL_GET_ELEMENT(NetPDLDatabase, AfterElement->FirstChild));
-
-			if (RetVal != nbSUCCESS)
-				return RetVal;
-		}
-
-		// We may even have to execute several sections (if more 'when' attributes matches)
-		AfterElement= AfterElement->NextExecuteElement;
-	}
-*/
 	return ReturnCode;
 }
 
@@ -423,10 +349,10 @@ int ReturnCode= nbSUCCESS;
 	\return nbSUCCESS if everything is fine, nbFAILURE in case of error.
 	In case of error, the error message can be retrieved by the GetLastError() method.
 */
-int CNetPDLProtoDecoder::DecodeFields(struct _nbNetPDLElementBase *FieldElement, unsigned int MaxOffsetToBeDecoded, struct _nbPDMLField *PDMLParent, int *LoopCtrl, unsigned int *Len)
+int CNetPDLProtoDecoder::DecodeFields(struct _nbNetPDLElementBase *FieldElement, unsigned long long MaxOffsetToBeDecoded, struct _nbPDMLField *PDMLParent, int *LoopCtrl, unsigned int *Len)
 {
-unsigned int StartingOffset;
-unsigned int CurrentOffset;
+unsigned long long StartingOffset;
+unsigned long long CurrentOffset;
 
 	*Len= 0;
 
@@ -434,7 +360,7 @@ unsigned int CurrentOffset;
 	StartingOffset= CurrentOffset;
 
 	// Decode all the fields contained into the header
-	while( (FieldElement != NULL) && (CurrentOffset <= MaxOffsetToBeDecoded) )
+	while( (FieldElement != nullptr) && (CurrentOffset <= MaxOffsetToBeDecoded) )
 	{
 	int RetVal;
 
@@ -480,7 +406,7 @@ unsigned int CurrentOffset;
 	\return nbSUCCESS if everything is fine, nbFAILURE in case or error.
 	In case of error, the error message can be retrieved by the GetLastError() method.
 */
-int CNetPDLProtoDecoder::DecodeField(struct _nbNetPDLElementBase *FieldElement, unsigned int MaxOffsetToBeDecoded, struct _nbPDMLField *PDMLParent, int *LoopCtrl)
+int CNetPDLProtoDecoder::DecodeField(struct _nbNetPDLElementBase *FieldElement, unsigned long long MaxOffsetToBeDecoded, struct _nbPDMLField *PDMLParent, int *LoopCtrl)
 {
 int RetVal;
 
@@ -565,9 +491,9 @@ int RetVal;
 		case nbNETPDL_IDEL_IF:
 		// field is an 'if' field
 		{
-		struct _nbNetPDLElementBase *FirstIfField = NULL;
+		struct _nbNetPDLElementBase *FirstIfField = nullptr;
 		struct _nbNetPDLElementIf *IfNode;
-		unsigned int Result;
+		unsigned long long Result;
 		unsigned int DecodedLen;
 
 			IfNode= (struct _nbNetPDLElementIf *) FieldElement;
@@ -583,7 +509,7 @@ int RetVal;
 				{
 					FirstIfField= IfNode->FirstValidChildIfMissingPacketData;
 
-					if (FirstIfField == NULL)
+					if (FirstIfField == nullptr)
 						return nbWARNING;
 
 				}; break;
@@ -595,7 +521,7 @@ int RetVal;
 					else
 						FirstIfField= IfNode->FirstValidChildIfFalse;
 
-					if (FirstIfField == NULL)
+					if (FirstIfField == nullptr)
 						return nbSUCCESS;
 
 				}; break;
@@ -641,7 +567,7 @@ int RetVal;
 
 		case nbNETPDL_IDEL_FIELD:
 		{
-		unsigned int StartingOffsetOfThisField;
+		unsigned long long StartingOffsetOfThisField;
 		struct _nbPDMLField *CurrentPDMLElement;
 
 			RetVal= DecodeStandardField((struct _nbNetPDLElementFieldBase *) FieldElement, MaxOffsetToBeDecoded, PDMLParent, &CurrentPDMLElement, &StartingOffsetOfThisField);
@@ -695,12 +621,12 @@ int RetVal;
 	\return nbSUCCESS if everything is fine, nbFAILURE in case or error.
 	In case of error, the error message can be retrieved by the GetLastError() method.
 */
-int CNetPDLProtoDecoder::DecodeLoop(struct _nbNetPDLElementLoop *LoopElement, unsigned int MaxOffsetToBeDecoded, struct _nbPDMLField *PDMLParent)
+int CNetPDLProtoDecoder::DecodeLoop(struct _nbNetPDLElementLoop *LoopElement, unsigned long long MaxOffsetToBeDecoded, struct _nbPDMLField *PDMLParent)
 {
 struct _nbNetPDLElementBase *FirstLoopField;
-unsigned int Value;
+unsigned long long Value;
 int RetVal;
-unsigned int CurrentOffset;
+unsigned long long CurrentOffset;
 
 	// Get the starting offset of this field
 	m_netPDLVariables->GetVariableNumber(m_netPDLVariables->m_defaultVarList.CurrentOffset, &CurrentOffset);
@@ -949,9 +875,9 @@ MissingPacketData:
 
 	\return nbSUCCESS if everything is fine, nbFAILURE in case or error.
 */
-int CNetPDLProtoDecoder::GetFieldParams(struct _nbNetPDLElementFieldBase *FieldElement, unsigned int MaxOffsetToBeDecoded, unsigned int *StartingBytesToDiscard, unsigned int *FieldLen, unsigned int *EndingBytesToDiscard)
+int CNetPDLProtoDecoder::GetFieldParams(struct _nbNetPDLElementFieldBase *FieldElement, unsigned long long MaxOffsetToBeDecoded, unsigned long long* StartingBytesToDiscard, unsigned long long* FieldLen, unsigned long long *EndingBytesToDiscard)
 {
-unsigned int StartingFieldOffset;
+unsigned long long StartingFieldOffset;
 int RetVal;
 
 	// Get the starting offset of this field
@@ -977,11 +903,6 @@ int RetVal;
 			BitField= (struct _nbNetPDLElementFieldBit *) FieldElement;
 
 			(*FieldLen)= BitField->Size;
-
-			//// TEMP FABIO 27/06/2008: l'esecuzione di queste istruzioni � differita nel chiamante
-			//if (BitField->IsLastBitField == 0)
-			//	UpdateStartingOffsetVariable= false;
-
 			break;
 		}
 
@@ -998,14 +919,6 @@ int RetVal;
 				}
 
 				(*FieldLen)++;
-
-				// This case is already included in previous one
-				// It checks if the line is DOS-like
-				//if ( (m_packet[StartingOffset + FieldLen] == '\r') && (m_packet[StartingOffset + FieldLen + 1] == '\n') )
-				//{
-				//	FieldLen+= 2;
-				//	break;
-				//}
 			}
 
 			break;
@@ -1066,7 +979,7 @@ int RetVal;
 
 				RegExpReturnCode= pcre_exec(
 					(pcre *) FieldTokenEndedElement->EndPCRECompiledRegExp,		// the compiled pattern
-					NULL,									// no extra data - we didn't study the pattern
+					nullptr,									// no extra data - we didn't study the pattern
 					(char *) &m_packet[StartingFieldOffset],				// the subject string
 					MaxOffsetToBeDecoded - StartingFieldOffset + 1,	// the length of the subject
 					0,									// start at offset 0 in the subject
@@ -1119,9 +1032,9 @@ int RetVal;
 		case nbNETPDL_ID_FIELD_TOKENWRAPPED:
 		{
 		struct _nbNetPDLElementFieldTokenWrapped *FieldTokenWrappedElement;
-		unsigned int FieldStartingOffset;
-		unsigned int StartingTokenLen;
-		unsigned int NewBeginOffset;
+		unsigned long long FieldStartingOffset;
+		unsigned long long StartingTokenLen;
+		unsigned long long NewBeginOffset;
 
 			FieldTokenWrappedElement= (struct _nbNetPDLElementFieldTokenWrapped *) FieldElement;
 
@@ -1152,7 +1065,7 @@ int RetVal;
 
 				RegExpReturnCode= pcre_exec(
 					(pcre *) FieldTokenWrappedElement->BeginPCRECompiledRegExp,		// the compiled pattern
-					NULL,									// no extra data - we didn't study the pattern
+					nullptr,									// no extra data - we didn't study the pattern
 					(char *) &m_packet[StartingFieldOffset],				// the subject string
 					MaxOffsetToBeDecoded - StartingFieldOffset + 1,	// the length of the subject
 					0,									// start at offset 0 in the subject
@@ -1209,7 +1122,7 @@ int RetVal;
 
 				RegExpReturnCode= pcre_exec(
 					(pcre *) FieldTokenWrappedElement->EndPCRECompiledRegExp,		// the compiled pattern
-					NULL,									// no extra data - we didn't study the pattern
+					nullptr,									// no extra data - we didn't study the pattern
 					(char *) &m_packet[FieldStartingOffset + (*FieldLen)],				// the subject string
 					MaxOffsetToBeDecoded - FieldStartingOffset - (*FieldLen) + 1,	// the length of the subject
 					0,									// start at offset 0 in the subject
@@ -1256,7 +1169,7 @@ int RetVal;
 
 			if (FieldTokenWrappedElement->EndOffsetExprTree)
 			{
-			unsigned int NewEndOffset;
+			unsigned long long NewEndOffset;
 
 				RetVal= m_exprHandler->EvaluateExprNumber(
 								FieldTokenWrappedElement->EndOffsetExprTree, m_PDMLProtoItem->FirstField, &NewEndOffset);
@@ -1290,7 +1203,7 @@ int RetVal;
 
 			RegExpReturnCode= pcre_exec(
 				(pcre *) FieldPatternElement->PatternPCRECompiledRegExp,	// the compiled pattern
-				NULL,										// no extra data - we didn't study the pattern
+				nullptr,										// no extra data - we didn't study the pattern
 				(char *) &m_packet[StartingFieldOffset],			// the subject string
 				MaxOffsetToBeDecoded - StartingFieldOffset + 1,	// the length of the subject
 				0,									// start at offset 0 in the subject
@@ -1399,7 +1312,7 @@ int RetVal;
 			{
 				RegExpReturnCode= pcre_exec(
 					(pcre *) CfieldDelimitedElement->BeginPCRECompiledRegExp,		// the compiled pattern
-					NULL,											// no extra data - we didn't study the pattern
+					nullptr,											// no extra data - we didn't study the pattern
 					(char *) &m_packet[StartingFieldOffset],				// the subject string
 					MaxOffsetToBeDecoded - StartingFieldOffset + 1,		// the length of the subject
 					0,									// start at offset 0 in the subject
@@ -1426,7 +1339,7 @@ int RetVal;
 
 			RegExpReturnCode= pcre_exec(
 				(pcre *) CfieldDelimitedElement->EndPCRECompiledRegExp,		// the compiled pattern
-				NULL,												// no extra data - we didn't study the pattern
+				nullptr,												// no extra data - we didn't study the pattern
 				(char *) &m_packet[SubFieldStartingOffset],			// the subject string
 				MaxOffsetToBeDecoded - SubFieldStartingOffset + 1,	// the length of the subject
 				0,									// start at offset 0 in the subject
@@ -1534,7 +1447,7 @@ int RetVal;
 
 			RegExpReturnCode= pcre_exec(
 				(pcre *) CfieldDynamicElement->PatternPCRECompiledRegExp,	// the compiled pattern
-				NULL,										// no extra data - we didn't study the pattern
+				nullptr,										// no extra data - we didn't study the pattern
 				(char *) &m_packet[StartingFieldOffset],			// the subject string
 				MaxOffsetToBeDecoded - StartingFieldOffset + 1,	// the length of the subject
 				0,									// start at offset 0 in the subject
@@ -1683,14 +1596,14 @@ int RetVal;
 			int MatchingOffset[MATCHING_OFFSET_COUNT];
 			int PCREFlags= PCRE_DOTALL;
 
-				PatternPCRECompiledRegExp= (void *) pcre_compile(".+</.+?>", PCREFlags, &PCREErrorPtr, &PCREErrorOffset, NULL);
+				PatternPCRECompiledRegExp= (void *) pcre_compile(".+</.+?>", PCREFlags, &PCREErrorPtr, &PCREErrorOffset, nullptr);
 
-				if (PatternPCRECompiledRegExp == NULL)
+				if (PatternPCRECompiledRegExp == nullptr)
 					return nbFAILURE;
 
 				RegExpReturnCode= pcre_exec(
 					(pcre *) PatternPCRECompiledRegExp,			// the compiled pattern
-					NULL,										// no extra data - we didn't study the pattern
+					nullptr,										// no extra data - we didn't study the pattern
 					(char *) &m_packet[StartingFieldOffset],			// the subject string
 					MaxOffsetToBeDecoded - StartingFieldOffset + 1,	// the length of the subject
 					0,									// start at offset 0 in the subject
@@ -1739,7 +1652,7 @@ int RetVal;
 	\return nbSUCCESS if everything is fine, nbFAILURE in case or error.
 	In case of error, the error message can be retrieved by the GetLastError() method.
 */
-//int CNetPDLProtoDecoder::DecodeStandardFieldOLD(struct _nbNetPDLElementFieldBase *FieldElement, unsigned int MaxOffsetToBeDecoded, struct _nbPDMLField *PDMLParent, struct _nbPDMLField **CurrentPDMLElement, unsigned int *CurrentFieldStartingOffset)
+//int CNetPDLProtoDecoder::DecodeStandardFieldOLD(struct _nbNetPDLElementFieldBase *FieldElement, unsigned long long MaxOffsetToBeDecoded, struct _nbPDMLField *PDMLParent, struct _nbPDMLField **CurrentPDMLElement, unsigned int *CurrentFieldStartingOffset)
 //{
 //struct _nbPDMLField *PDMLElement;
 //int UpdateStartingOffsetVariable;
@@ -2193,14 +2106,14 @@ int RetVal;
 	\return nbSUCCESS if everything is fine, nbFAILURE in case or error.
 	In case of error, the error message can be retrieved by the GetLastError() method.
 */
-int CNetPDLProtoDecoder::DecodeSubfield(struct _nbNetPDLElementSubfield *SubfieldElement, unsigned int StartingOffset, unsigned int Size, _nbPDMLField *PDMLParent, int *LoopCtrl, struct _nbPDMLField *AlreadyAllocatedPDMLElement)
+int CNetPDLProtoDecoder::DecodeSubfield(struct _nbNetPDLElementSubfield *SubfieldElement, unsigned long long StartingOffset, unsigned int Size, _nbPDMLField *PDMLParent, int *LoopCtrl, struct _nbPDMLField *AlreadyAllocatedPDMLElement)
 {
 		if (SubfieldElement->ComplexSubfieldInfo)
 		{
 		struct _nbPDMLField *CurrentPDMLElement;
 		int RetVal;
-		unsigned int CurrentOffsetBuffer;
-		unsigned int CurrentFieldStartingOffset;
+		unsigned long long CurrentOffsetBuffer;
+		unsigned long long CurrentFieldStartingOffset;
 
 			// Save the offset of the next sibling field; we need to restore this offset as soon as we decoded child fields
 			m_netPDLVariables->GetVariableNumber(m_netPDLVariables->m_defaultVarList.CurrentOffset, &CurrentOffsetBuffer);
@@ -2222,9 +2135,9 @@ int CNetPDLProtoDecoder::DecodeSubfield(struct _nbNetPDLElementSubfield *Subfiel
 		{
 		struct _nbPDMLField *PDMLElement;
 		int RetVal;
-		unsigned int CurrentOffsetBuffer;
+		unsigned long long CurrentOffsetBuffer;
 
-			if (AlreadyAllocatedPDMLElement == NULL)
+			if (AlreadyAllocatedPDMLElement == nullptr)
 			{
 				// Create a Field node and append it to PDML tree
 				PDMLElement= m_PDMLMaker->PDMLElementInitialize(PDMLParent);
@@ -2242,7 +2155,7 @@ int CNetPDLProtoDecoder::DecodeSubfield(struct _nbNetPDLElementSubfield *Subfiel
 
 			// In case the field does not exist (e.g. it's a conditional field or such),
 			// it does not dif for childrens, because CurrentPDMLElement is NULL
-			if ((SubfieldElement->FirstChild != nbNETPDL_INVALID_ELEMENT) && (PDMLElement != NULL))
+			if ((SubfieldElement->FirstChild != nbNETPDL_INVALID_ELEMENT) && (PDMLElement != nullptr))
 			{
 			unsigned int DecodedLen;
 			struct _nbNetPDLElementBase *ChildFieldElement;
@@ -2294,13 +2207,13 @@ int CNetPDLProtoDecoder::DecodeSubfield(struct _nbNetPDLElementSubfield *Subfiel
 	\return nbSUCCESS if everything is fine, nbFAILURE in case or error.
 	In case of error, the error message can be retrieved by the GetLastError() method.
 */
-int CNetPDLProtoDecoder::DecodeStandardField(struct _nbNetPDLElementFieldBase *FieldElement, unsigned int MaxOffsetToBeDecoded, struct _nbPDMLField *PDMLParent, struct _nbPDMLField **CurrentPDMLElement, unsigned int* CurrentFieldStartingOffset)
+int CNetPDLProtoDecoder::DecodeStandardField(struct _nbNetPDLElementFieldBase *FieldElement, unsigned long long MaxOffsetToBeDecoded, struct _nbPDMLField *PDMLParent, struct _nbPDMLField **CurrentPDMLElement, unsigned long long* CurrentFieldStartingOffset)
 {
 struct _nbPDMLField *PDMLElement;
 struct _nbNetPDLElementBase *CurrentSubfieldElement;
 unsigned int CurrentPortionStartingOffset;
 unsigned int CurrentPortionSize;
-unsigned int StartingBytesToDiscard, FieldLen, EndingBytesToDiscard;
+unsigned long long StartingBytesToDiscard, FieldLen, EndingBytesToDiscard;
 struct _nbNetPDLElementSubfield DefaultSubfield= {0};
 struct _nbNetPDLElementShowTemplate DefaultShowTemplate= {0};
 int LoopCtrl= nbNETPDL_ID_LOOPCTRL_NONE;
@@ -2318,14 +2231,14 @@ int RetVal;
 	if (FieldLen <= 0 && FieldElement->FieldType != nbNETPDL_ID_CFIELD_ASN1)
 	{
 		// This value must be returned to the caller
-		*CurrentPDMLElement= NULL;
+		*CurrentPDMLElement= nullptr;
 
 		return nbSUCCESS;
 	}
 	else
 	{
-	unsigned int StartingOffset;
-	unsigned int NewOffset;
+	unsigned long long StartingOffset;
+	unsigned long long NewOffset;
 
 		// Get the starting offset of this field
 		m_netPDLVariables->GetVariableNumber(m_netPDLVariables->m_defaultVarList.CurrentOffset, &StartingOffset);
@@ -2345,7 +2258,7 @@ int RetVal;
 			TrivialField.IsInNetworkByteOrder= FieldElement->IsInNetworkByteOrder;
 			TrivialField.ShowTemplateInfo= &DefaultShowTemplate;
 			
-			DecodeSubfield(&TrivialField, StartingOffset, StartingBytesToDiscard, PDMLParent, &LoopCtrl, NULL);
+			DecodeSubfield(&TrivialField, StartingOffset, StartingBytesToDiscard, PDMLParent, &LoopCtrl, nullptr);
 #endif
 
 			NewOffset+= StartingBytesToDiscard;
@@ -2403,14 +2316,14 @@ int RetVal;
 
 				if (CurrentSubfieldElement)
 				{
-					DecodeSubfield((struct _nbNetPDLElementSubfield *) CurrentSubfieldElement, CurrentPortionStartingOffset, CurrentPortionSize, PDMLElement, &LoopCtrl, NULL);
+					DecodeSubfield((struct _nbNetPDLElementSubfield *) CurrentSubfieldElement, CurrentPortionStartingOffset, CurrentPortionSize, PDMLElement, &LoopCtrl, nullptr);
 				}
 				else
 				{
 					DefaultSubfield.Name= (char *) NETPDL_SUBFIELD_NAME_TLV_TYPE;
 					DefaultSubfield.IsInNetworkByteOrder= CfieldTLVElement->IsInNetworkByteOrder;
 					
-					DecodeSubfield(&DefaultSubfield, CurrentPortionStartingOffset, CurrentPortionSize, PDMLElement, &LoopCtrl, NULL);
+					DecodeSubfield(&DefaultSubfield, CurrentPortionStartingOffset, CurrentPortionSize, PDMLElement, &LoopCtrl, nullptr);
 				}
 
 				// Let's decode the 'Length' portion
@@ -2420,14 +2333,14 @@ int RetVal;
 
 				if (CurrentSubfieldElement)
 				{
-					DecodeSubfield((struct _nbNetPDLElementSubfield *) CurrentSubfieldElement, CurrentPortionStartingOffset, CurrentPortionSize, PDMLElement, &LoopCtrl, NULL);
+					DecodeSubfield((struct _nbNetPDLElementSubfield *) CurrentSubfieldElement, CurrentPortionStartingOffset, CurrentPortionSize, PDMLElement, &LoopCtrl, nullptr);
 				}
 				else
 				{
 					DefaultSubfield.Name= (char *) NETPDL_SUBFIELD_NAME_TLV_LENGTH;
 					DefaultSubfield.IsInNetworkByteOrder= CfieldTLVElement->IsInNetworkByteOrder;
 					
-					DecodeSubfield(&DefaultSubfield, CurrentPortionStartingOffset, CurrentPortionSize, PDMLElement, &LoopCtrl, NULL);
+					DecodeSubfield(&DefaultSubfield, CurrentPortionStartingOffset, CurrentPortionSize, PDMLElement, &LoopCtrl, nullptr);
 				}
 
 				// Let's decode the 'Value' portion
@@ -2437,14 +2350,14 @@ int RetVal;
 				
 				if (CurrentSubfieldElement)
 				{
-					DecodeSubfield((struct _nbNetPDLElementSubfield *) CurrentSubfieldElement, CurrentPortionStartingOffset, CurrentPortionSize, PDMLElement, &LoopCtrl, NULL);
+					DecodeSubfield((struct _nbNetPDLElementSubfield *) CurrentSubfieldElement, CurrentPortionStartingOffset, CurrentPortionSize, PDMLElement, &LoopCtrl, nullptr);
 				}
 				else
 				{
 					DefaultSubfield.Name= (char *) NETPDL_SUBFIELD_NAME_TLV_VALUE;
 					DefaultSubfield.IsInNetworkByteOrder= CfieldTLVElement->IsInNetworkByteOrder;
 					
-					DecodeSubfield(&DefaultSubfield, CurrentPortionStartingOffset, CurrentPortionSize, PDMLElement, &LoopCtrl, NULL);
+					DecodeSubfield(&DefaultSubfield, CurrentPortionStartingOffset, CurrentPortionSize, PDMLElement, &LoopCtrl, nullptr);
 				}
 
 				break;
@@ -2464,7 +2377,7 @@ int RetVal;
 
 				RegExpReturnCode= pcre_exec(
 					(pcre *) CfieldHdrlineElement->SeparatorPCRECompiledRegExp,		// the compiled pattern
-					NULL,											// no extra data - we didn't study the pattern
+					nullptr,											// no extra data - we didn't study the pattern
 					(char *) &m_packet[StartingOffset],				// the subject string
 					FieldLen,										// the length of the subject
 					0,									// start at offset 0 in the subject
@@ -2476,16 +2389,16 @@ int RetVal;
 				{
 					CurrentPortionSize= FieldLen;
 
-					if (CurrentSubfieldElement != NULL)
+					if (CurrentSubfieldElement != nullptr)
 					{
-						DecodeSubfield((struct _nbNetPDLElementSubfield *) CurrentSubfieldElement, CurrentPortionStartingOffset, CurrentPortionSize, PDMLElement, &LoopCtrl, NULL);
+						DecodeSubfield((struct _nbNetPDLElementSubfield *) CurrentSubfieldElement, CurrentPortionStartingOffset, CurrentPortionSize, PDMLElement, &LoopCtrl, nullptr);
 					}
 					else
 					{
 						DefaultSubfield.Name= (char *) NETPDL_SUBFIELD_NAME_HDRLINE_HNAME;
 						DefaultSubfield.IsInNetworkByteOrder= CfieldHdrlineElement->IsInNetworkByteOrder;
 						
-						DecodeSubfield(&DefaultSubfield, CurrentPortionStartingOffset, CurrentPortionSize, PDMLElement, &LoopCtrl, NULL);
+						DecodeSubfield(&DefaultSubfield, CurrentPortionStartingOffset, CurrentPortionSize, PDMLElement, &LoopCtrl, nullptr);
 					}
 
 					break;
@@ -2495,16 +2408,16 @@ int RetVal;
 				{
 					CurrentPortionSize= MatchingOffset[0];
 
-					if (CurrentSubfieldElement != NULL)
+					if (CurrentSubfieldElement != nullptr)
 					{
-						DecodeSubfield((struct _nbNetPDLElementSubfield *) CurrentSubfieldElement, CurrentPortionStartingOffset, CurrentPortionSize, PDMLElement, &LoopCtrl, NULL);
+						DecodeSubfield((struct _nbNetPDLElementSubfield *) CurrentSubfieldElement, CurrentPortionStartingOffset, CurrentPortionSize, PDMLElement, &LoopCtrl, nullptr);
 					}
 					else
 					{
 						DefaultSubfield.Name= (char *) NETPDL_SUBFIELD_NAME_HDRLINE_HNAME;
 						DefaultSubfield.IsInNetworkByteOrder= CfieldHdrlineElement->IsInNetworkByteOrder;
 						
-						DecodeSubfield(&DefaultSubfield, CurrentPortionStartingOffset, CurrentPortionSize, PDMLElement, &LoopCtrl, NULL);
+						DecodeSubfield(&DefaultSubfield, CurrentPortionStartingOffset, CurrentPortionSize, PDMLElement, &LoopCtrl, nullptr);
 					}
 
 					// Let's decode the 'Header Value' portion
@@ -2512,16 +2425,16 @@ int RetVal;
 					CurrentPortionStartingOffset+= (unsigned int) MatchingOffset[1];
 					CurrentPortionSize= FieldLen - (unsigned int) MatchingOffset[1];
 
-					if (CurrentSubfieldElement != NULL)
+					if (CurrentSubfieldElement != nullptr)
 					{
-								DecodeSubfield((struct _nbNetPDLElementSubfield *) CurrentSubfieldElement, CurrentPortionStartingOffset, CurrentPortionSize, PDMLElement, &LoopCtrl, NULL);
+								DecodeSubfield((struct _nbNetPDLElementSubfield *) CurrentSubfieldElement, CurrentPortionStartingOffset, CurrentPortionSize, PDMLElement, &LoopCtrl, nullptr);
 					}
 					else
 					{
 						DefaultSubfield.Name= (char *) NETPDL_SUBFIELD_NAME_HDRLINE_HVALUE;
 						DefaultSubfield.IsInNetworkByteOrder= CfieldHdrlineElement->IsInNetworkByteOrder;
 						
-						DecodeSubfield(&DefaultSubfield, CurrentPortionStartingOffset, CurrentPortionSize, PDMLElement, &LoopCtrl, NULL);
+						DecodeSubfield(&DefaultSubfield, CurrentPortionStartingOffset, CurrentPortionSize, PDMLElement, &LoopCtrl, nullptr);
 					}
 				}
 
@@ -2540,7 +2453,7 @@ int RetVal;
 
 				RegExpReturnCode= pcre_exec(
 					(pcre *) CfieldDynamicElement->PatternPCRECompiledRegExp,	// the compiled pattern
-					NULL,										// no extra data - we didn't study the pattern
+					nullptr,										// no extra data - we didn't study the pattern
 					(char *) &m_packet[StartingOffset],			// the subject string
 					MaxOffsetToBeDecoded - StartingOffset + 1,	// the length of the subject
 					0,									// start at offset 0 in the subject
@@ -2550,7 +2463,7 @@ int RetVal;
 
 				// Let's decode subpattern-related portions
 				CurrentSubfieldElement= nbNETPDL_GET_ELEMENT(NetPDLDatabase, CfieldDynamicElement->FirstChild);
-				while (CurrentSubfieldElement != NULL)
+				while (CurrentSubfieldElement != nullptr)
 				{
 					RegExpReturnCode= pcre_get_stringnumber(
 						(pcre *) CfieldDynamicElement->PatternPCRECompiledRegExp,						// the compiled pattern
@@ -2561,7 +2474,7 @@ int RetVal;
 						CurrentPortionStartingOffset= StartingOffset + MatchingOffset[2*RegExpReturnCode];
 						CurrentPortionSize= MatchingOffset[2*RegExpReturnCode+1] - MatchingOffset[2*RegExpReturnCode];
 
-						DecodeSubfield((struct _nbNetPDLElementSubfield *) CurrentSubfieldElement, CurrentPortionStartingOffset, CurrentPortionSize, PDMLElement, &LoopCtrl, NULL);
+						DecodeSubfield((struct _nbNetPDLElementSubfield *) CurrentSubfieldElement, CurrentPortionStartingOffset, CurrentPortionSize, PDMLElement, &LoopCtrl, nullptr);
 					}
 
 					CurrentSubfieldElement= nbNETPDL_GET_ELEMENT(NetPDLDatabase, CurrentSubfieldElement->NextSibling);
@@ -2569,7 +2482,7 @@ int RetVal;
 
 				while (DefaultSubfieldIndex < CfieldDynamicElement->NamesListNItems)
 				{
-					if (CfieldDynamicElement->NamesList[DefaultSubfieldIndex] != NULL)
+					if (CfieldDynamicElement->NamesList[DefaultSubfieldIndex] != nullptr)
 					{
 					struct _nbNetPDLElementSubfield DefaultSubfield= {0};
 					//struct _nbNetPDLElementShowTemplate DefaultShowTemplate= {0};
@@ -2584,7 +2497,7 @@ int RetVal;
 						CurrentPortionStartingOffset= StartingOffset + MatchingOffset[2*RegExpReturnCode];
 						CurrentPortionSize= MatchingOffset[2*RegExpReturnCode+1] - MatchingOffset[2*RegExpReturnCode];
 
-						DecodeSubfield(&DefaultSubfield, CurrentPortionStartingOffset, CurrentPortionSize, PDMLElement, &LoopCtrl, NULL);
+						DecodeSubfield(&DefaultSubfield, CurrentPortionStartingOffset, CurrentPortionSize, PDMLElement, &LoopCtrl, nullptr);
 					}
 
 					DefaultSubfieldIndex++;
@@ -2644,7 +2557,7 @@ int RetVal;
 			TrivialField.IsInNetworkByteOrder= FieldElement->IsInNetworkByteOrder;
 			TrivialField.ShowTemplateInfo= &DefaultShowTemplate;
 			
-			DecodeSubfield(&TrivialField, NewOffset, EndingBytesToDiscard, PDMLParent, &LoopCtrl, NULL);
+			DecodeSubfield(&TrivialField, NewOffset, EndingBytesToDiscard, PDMLParent, &LoopCtrl, nullptr);
 #endif
 
 			NewOffset+= EndingBytesToDiscard;
@@ -2667,7 +2580,7 @@ int RetVal;
 /*!
 	\brief This method handles mapping (i.e. &lt;map&gt; element)
 */
-void CNetPDLProtoDecoder::DecodeMapTree(struct _nbNetPDLElementCfieldXML *CfieldXMLElement, struct _nbPDMLField *PDMLFieldXML, unsigned int MinOffsetToBeDecoded, unsigned int MaxOffsetToBeDecoded)
+void CNetPDLProtoDecoder::DecodeMapTree(struct _nbNetPDLElementCfieldXML *CfieldXMLElement, struct _nbPDMLField *PDMLFieldXML, unsigned int MinOffsetToBeDecoded, unsigned long long MaxOffsetToBeDecoded)
 {
 //struct _nbNetPDLElementCfieldMap *TempMapElement;
 //
@@ -2697,13 +2610,13 @@ void CNetPDLProtoDecoder::DecodeMapTree(struct _nbNetPDLElementCfieldXML *Cfield
 	\return nbSUCCESS if everything is fine, nbFAILURE in case or error.
 	In case of error, the error message can be retrieved by the GetLastError() method.
 */
-int CNetPDLProtoDecoder::DecodeSet(struct _nbNetPDLElementSet *SetElement, unsigned int MaxOffsetToBeDecoded, struct _nbPDMLField *PDMLParent)
+int CNetPDLProtoDecoder::DecodeSet(struct _nbNetPDLElementSet *SetElement, unsigned long long MaxOffsetToBeDecoded, struct _nbPDMLField *PDMLParent)
 {
-unsigned int StartingBytesToDiscard, FieldLen, EndingBytesToDiscard;
-struct _nbPDMLField *PDMLStartingElement= NULL;
-struct _nbPDMLField *PDMLFieldElement= NULL;
-struct _nbPDMLField *PDMLEndingElement= NULL;
-unsigned int ExitCondValue;
+unsigned long long StartingBytesToDiscard, FieldLen, EndingBytesToDiscard;
+struct _nbPDMLField *PDMLStartingElement= nullptr;
+struct _nbPDMLField *PDMLFieldElement= nullptr;
+struct _nbPDMLField *PDMLEndingElement= nullptr;
+unsigned long long ExitCondValue;
 int RetVal;
 int LoopCtrl= nbNETPDL_ID_LOOPCTRL_NONE;
 unsigned int DecodedLen;
@@ -2718,7 +2631,7 @@ uint8_t InTheMiddleFailure= false;
 
 	if (RetVal != nbSUCCESS)
 	{
-		if (SetElement->FirstValidChildIfMissingPacketData == NULL)
+		if (SetElement->FirstValidChildIfMissingPacketData == nullptr)
 		{
 			errorsnprintf(__FILE__, __FUNCTION__, __LINE__, m_errbuf, m_errbufSize, 
 				"Decoding of set fails due to evaluation of '%s' exit condition.", SetElement->ExitWhen->ExitExprString);
@@ -2729,13 +2642,13 @@ uint8_t InTheMiddleFailure= false;
 	}
 
 	// Declare other variables aimed at decoding process
-	unsigned int CurrentOffset;
+	unsigned long long CurrentOffset;
 	struct _nbNetPDLElementFieldBase SpeculativeField= {0};
 	struct _nbNetPDLElementSubfield DefaultSubfield= {0};
 	struct _nbNetPDLElementShowTemplate DefaultShowTemplate= {0};
-	unsigned int NewOffset;
+	unsigned long long NewOffset;
 	struct _nbNetPDLElementFieldmatch *TempFieldmatchElement;
-	unsigned int MatchExprValue;
+	unsigned long long MatchExprValue;
 
 	// Initialize data structures for speculative field decoding
 	SpeculativeField.IsInNetworkByteOrder= SetElement->FieldToDecode->IsInNetworkByteOrder;
@@ -2759,7 +2672,7 @@ uint8_t InTheMiddleFailure= false;
 
 		if (RetVal != nbSUCCESS)
 		{
-			if (SetElement->FirstValidChildIfMissingPacketData == NULL)
+			if (SetElement->FirstValidChildIfMissingPacketData == nullptr)
 			{
 				errorsnprintf(__FILE__, __FUNCTION__, __LINE__, m_errbuf, m_errbufSize, 
 					"Decoding of set fails due to speculative decoding of the set-related item.");
@@ -2833,7 +2746,7 @@ uint8_t InTheMiddleFailure= false;
 
 				DefaultSubfield.Name= (char *) NETPDL_SUBFIELD_NAME_TLV_TYPE;
 				
-				RetVal= DecodeSubfield(&DefaultSubfield, CurrentPortionStartingOffset, CurrentPortionSize, PDMLFieldElement, &LoopCtrl, NULL);
+				RetVal= DecodeSubfield(&DefaultSubfield, CurrentPortionStartingOffset, CurrentPortionSize, PDMLFieldElement, &LoopCtrl, nullptr);
 
 				if (RetVal != nbSUCCESS)
 					goto DecodeSet_SpeculativeDecodingFailure;
@@ -2844,7 +2757,7 @@ uint8_t InTheMiddleFailure= false;
 
 				DefaultSubfield.Name= (char *) NETPDL_SUBFIELD_NAME_TLV_LENGTH;
 				
-				RetVal= DecodeSubfield(&DefaultSubfield, CurrentPortionStartingOffset, CurrentPortionSize, PDMLFieldElement, &LoopCtrl, NULL);
+				RetVal= DecodeSubfield(&DefaultSubfield, CurrentPortionStartingOffset, CurrentPortionSize, PDMLFieldElement, &LoopCtrl, nullptr);
 
 				if (RetVal != nbSUCCESS)
 					goto DecodeSet_SpeculativeDecodingFailure;
@@ -2855,7 +2768,7 @@ uint8_t InTheMiddleFailure= false;
 
 				DefaultSubfield.Name= (char *) NETPDL_SUBFIELD_NAME_TLV_VALUE;
 				
-				RetVal= DecodeSubfield(&DefaultSubfield, CurrentPortionStartingOffset, CurrentPortionSize, PDMLFieldElement, &LoopCtrl, NULL);
+				RetVal= DecodeSubfield(&DefaultSubfield, CurrentPortionStartingOffset, CurrentPortionSize, PDMLFieldElement, &LoopCtrl, nullptr);
 
 				if (RetVal != nbSUCCESS)
 					goto DecodeSet_SpeculativeDecodingFailure;
@@ -2924,7 +2837,7 @@ uint8_t InTheMiddleFailure= false;
 
 				RegExpReturnCode= pcre_exec(
 					(pcre *) CfieldHdrlineElement->SeparatorPCRECompiledRegExp,		// the compiled pattern
-					NULL,											// no extra data - we didn't study the pattern
+					nullptr,											// no extra data - we didn't study the pattern
 					(char *) &m_packet[NewOffset],					// the subject string
 					FieldLen,										// the length of the subject
 					0,									// start at offset 0 in the subject
@@ -2939,7 +2852,7 @@ uint8_t InTheMiddleFailure= false;
 
 					DefaultSubfield.Name= (char *) NETPDL_SUBFIELD_NAME_HDRLINE_HNAME;
 					
-					RetVal= DecodeSubfield(&DefaultSubfield, CurrentPortionStartingOffset, CurrentPortionSize, PDMLFieldElement, &LoopCtrl, NULL);
+					RetVal= DecodeSubfield(&DefaultSubfield, CurrentPortionStartingOffset, CurrentPortionSize, PDMLFieldElement, &LoopCtrl, nullptr);
 
 					if (RetVal != nbSUCCESS)
 						goto DecodeSet_SpeculativeDecodingFailure;
@@ -2954,7 +2867,7 @@ uint8_t InTheMiddleFailure= false;
 
 					DefaultSubfield.Name= (char *) NETPDL_SUBFIELD_NAME_HDRLINE_HNAME;
 					
-					RetVal= DecodeSubfield(&DefaultSubfield, CurrentPortionStartingOffset, CurrentPortionSize, PDMLFieldElement, &LoopCtrl, NULL);
+					RetVal= DecodeSubfield(&DefaultSubfield, CurrentPortionStartingOffset, CurrentPortionSize, PDMLFieldElement, &LoopCtrl, nullptr);
 
 					if (RetVal != nbSUCCESS)
 						goto DecodeSet_SpeculativeDecodingFailure;
@@ -2965,7 +2878,7 @@ uint8_t InTheMiddleFailure= false;
 
 					DefaultSubfield.Name= (char *) NETPDL_SUBFIELD_NAME_HDRLINE_HVALUE;
 					
-					RetVal= DecodeSubfield(&DefaultSubfield, CurrentPortionStartingOffset, CurrentPortionSize, PDMLFieldElement, &LoopCtrl, NULL);
+					RetVal= DecodeSubfield(&DefaultSubfield, CurrentPortionStartingOffset, CurrentPortionSize, PDMLFieldElement, &LoopCtrl, nullptr);
 
 					if (RetVal != nbSUCCESS)
 						goto DecodeSet_SpeculativeDecodingFailure;
@@ -3000,7 +2913,7 @@ uint8_t InTheMiddleFailure= false;
 				// Let's retrieve the matching offset vector to decode subfield
 				RegExpReturnCode= pcre_exec(
 					(pcre *) CfieldDynamicElement->PatternPCRECompiledRegExp,	// the compiled pattern
-					NULL,											// no extra data - we didn't study the pattern
+					nullptr,											// no extra data - we didn't study the pattern
 					(char *) &m_packet[PDMLFieldElement->Position],	// the subject string
 					PDMLFieldElement->Size,				// the length of the subject
 					0,									// start at offset 0 in the subject
@@ -3020,7 +2933,7 @@ uint8_t InTheMiddleFailure= false;
 					CurrentPortionStartingOffset= NewOffset + MatchingOffset[2*RegExpReturnCode];
 					CurrentPortionSize= MatchingOffset[2*RegExpReturnCode+1] - MatchingOffset[2*RegExpReturnCode];
 
-					RetVal= DecodeSubfield(&DefaultSubfield, CurrentPortionStartingOffset, CurrentPortionSize, PDMLFieldElement, &LoopCtrl, NULL);
+					RetVal= DecodeSubfield(&DefaultSubfield, CurrentPortionStartingOffset, CurrentPortionSize, PDMLFieldElement, &LoopCtrl, nullptr);
 
 					if (RetVal != nbSUCCESS)
 						goto DecodeSet_SpeculativeDecodingFailure;
@@ -3053,7 +2966,7 @@ uint8_t InTheMiddleFailure= false;
 
 				DefaultSubfield.Name= (char *) NETPDL_SUBFIELD_NAME_ASN1_ENCRULEDATA;
 
-				RetVal= DecodeSubfield(&DefaultSubfield, CurrentPortionStartingOffset, CurrentPortionSize, PDMLFieldElement, &LoopCtrl, NULL);
+				RetVal= DecodeSubfield(&DefaultSubfield, CurrentPortionStartingOffset, CurrentPortionSize, PDMLFieldElement, &LoopCtrl, nullptr);
 
 				if (RetVal != nbSUCCESS)
 					goto DecodeSet_SpeculativeDecodingFailure;
@@ -3095,7 +3008,7 @@ uint8_t InTheMiddleFailure= false;
 				m_netPDLVariables->SetVariableNumber(m_netPDLVariables->m_defaultVarList.CurrentOffset, CurrentOffset);
 				m_netPDLVariables->SetVariableNumber(m_netPDLVariables->m_defaultVarList.CurrentProtoOffset, CurrentOffset - m_protoStartingOffset);
 
-				if (SetElement->FirstValidChildIfMissingPacketData == NULL)
+				if (SetElement->FirstValidChildIfMissingPacketData == nullptr)
 				{
 					errorsnprintf(__FILE__, __FUNCTION__, __LINE__, m_errbuf, m_errbufSize, 
 						"Decoding of set fails due to evaluation of matching expression '%s'.", TempFieldmatchElement->MatchExprString);
@@ -3165,7 +3078,7 @@ uint8_t InTheMiddleFailure= false;
 		{
 			m_PDMLMaker->PDMLElementDiscard(PDMLFieldElement->FirstChild);
 
-			PDMLFieldElement->FirstChild= NULL;
+			PDMLFieldElement->FirstChild= nullptr;
 		}
 
 		/* 
@@ -3224,7 +3137,7 @@ DecodeSet_EndTLVPortionCheck:
 									PDMLTempSubfieldElement->Size, 
 									PDMLFieldElement, 
 									&LoopCtrl, 
-									NetPDLElementSubfield->ComplexSubfieldInfo? NULL : PDMLTempSubfieldElement);
+									NetPDLElementSubfield->ComplexSubfieldInfo? nullptr : PDMLTempSubfieldElement);
 
 								InTheMiddleFailure+= RetVal != nbSUCCESS;
 
@@ -3250,7 +3163,7 @@ DecodeSet_EndTLVPortionCheck:
 								if ( strncmp(NetPDLElementSubfield->PortionName, NETPDL_SUBFIELD_NAME_HDRLINE_HNAME, strlen(NETPDL_SUBFIELD_NAME_HDRLINE_HNAME)) == 0 )
 									{ PDMLTempSubfieldElement= PDMLFieldElement->FirstChild; goto DecodeSet_EndHdrlinePortionCheck; }
 								if ( strncmp(NetPDLElementSubfield->PortionName, NETPDL_SUBFIELD_NAME_HDRLINE_HVALUE, strlen(NETPDL_SUBFIELD_NAME_HDRLINE_HVALUE)) == 0 )
-									{ if ((PDMLTempSubfieldElement= PDMLFieldElement->FirstChild->NextField) != NULL) goto DecodeSet_EndHdrlinePortionCheck; }
+									{ if ((PDMLTempSubfieldElement= PDMLFieldElement->FirstChild->NextField) != nullptr) goto DecodeSet_EndHdrlinePortionCheck; }
 
 								InTheMiddleFailure= true;
 								break;
@@ -3274,7 +3187,7 @@ DecodeSet_EndHdrlinePortionCheck:
 									PDMLTempSubfieldElement->Size, 
 									PDMLFieldElement, 
 									&LoopCtrl, 
-									NetPDLElementSubfield->ComplexSubfieldInfo? NULL : PDMLTempSubfieldElement);
+									NetPDLElementSubfield->ComplexSubfieldInfo? nullptr : PDMLTempSubfieldElement);
 
 								InTheMiddleFailure+= RetVal != nbSUCCESS;
 
@@ -3319,7 +3232,7 @@ DecodeSet_EndHdrlinePortionCheck:
 											PDMLTempSubfieldElement->Size, 
 											PDMLFieldElement, 
 											&LoopCtrl, 
-											NetPDLElementSubfield->ComplexSubfieldInfo? NULL : PDMLTempSubfieldElement);
+											NetPDLElementSubfield->ComplexSubfieldInfo? nullptr : PDMLTempSubfieldElement);
 
 										InTheMiddleFailure+= RetVal != nbSUCCESS;
 									}
@@ -3336,7 +3249,7 @@ DecodeSet_EndHdrlinePortionCheck:
 				}; break;
 			default:
 				{
-				unsigned int CurrentOffsetBuffer;
+				unsigned long long CurrentOffsetBuffer;
 
 					// Save the offset of the next sibling field; we need to restore this offset as soon as we decoded child fields
 					m_netPDLVariables->GetVariableNumber(m_netPDLVariables->m_defaultVarList.CurrentOffset, &CurrentOffsetBuffer);
@@ -3413,7 +3326,7 @@ DecodeSet_EndHdrlinePortionCheck:
 			errorsnprintf(__FILE__, __FUNCTION__, __LINE__, m_errbuf, m_errbufSize, 
 				"Decoding of set fails due to evaluation of '%s' exit condition.", SetElement->ExitWhen->ExitExprString);
 
-			if (SetElement->FirstValidChildIfMissingPacketData == NULL)
+			if (SetElement->FirstValidChildIfMissingPacketData == nullptr)
 				return nbWARNING;
 
 			return DecodeFields(SetElement->FirstValidChildIfMissingPacketData, MaxOffsetToBeDecoded, PDMLParent, &LoopCtrl, &DecodedLen);
@@ -3467,21 +3380,21 @@ DecodeSet_SpeculativeDecodingFailure:
 	\return nbSUCCESS if everything is fine, nbFAILURE in case or error.
 	In case of error, the error message can be retrieved by the GetLastError() method.
 */
-int CNetPDLProtoDecoder::DecodeFieldChoice(struct _nbNetPDLElementChoice *ChoiceElement, unsigned int MaxOffsetToBeDecoded, struct _nbPDMLField *PDMLParent)
+int CNetPDLProtoDecoder::DecodeFieldChoice(struct _nbNetPDLElementChoice *ChoiceElement, unsigned long long MaxOffsetToBeDecoded, struct _nbPDMLField *PDMLParent)
 {
-unsigned int StartingBytesToDiscard, FieldLen, EndingBytesToDiscard;
-struct _nbPDMLField *PDMLStartingElement= NULL;
-struct _nbPDMLField *PDMLFieldElement= NULL;
-struct _nbPDMLField *PDMLEndingElement= NULL;
+unsigned long long StartingBytesToDiscard, FieldLen, EndingBytesToDiscard;
+struct _nbPDMLField *PDMLStartingElement= nullptr;
+struct _nbPDMLField *PDMLFieldElement= nullptr;
+struct _nbPDMLField *PDMLEndingElement= nullptr;
 int RetVal;
-unsigned int CurrentOffset;
+unsigned long long CurrentOffset;
 struct _nbNetPDLElementFieldBase SpeculativeField= {0};
 struct _nbNetPDLElementSubfield DefaultSubfield= {0};
 struct _nbNetPDLElementShowTemplate DefaultShowTemplate= {0};
 int LoopCtrl= nbNETPDL_ID_LOOPCTRL_NONE;
 unsigned int NewOffset;
 struct _nbNetPDLElementFieldmatch *TempFieldMatchElement;
-unsigned int MatchExprValue;
+unsigned long long MatchExprValue;
 unsigned int DecodedLen;
 uint8_t InTheMiddleFailure= false;
 
@@ -3503,7 +3416,7 @@ uint8_t InTheMiddleFailure= false;
 
 	if (RetVal != nbSUCCESS)
 	{
-		if (ChoiceElement->FirstValidChildIfMissingPacketData == NULL)
+		if (ChoiceElement->FirstValidChildIfMissingPacketData == nullptr)
 		{
 			errorsnprintf(__FILE__, __FUNCTION__, __LINE__, m_errbuf, m_errbufSize, 
 				"Decoding of choice fails due to speculative decoding of the set-related item.");
@@ -3582,7 +3495,7 @@ uint8_t InTheMiddleFailure= false;
 
 			DefaultSubfield.Name= (char *) NETPDL_SUBFIELD_NAME_TLV_TYPE;
 			
-			RetVal= DecodeSubfield(&DefaultSubfield, CurrentPortionStartingOffset, CurrentPortionSize, PDMLFieldElement, &LoopCtrl, NULL);
+			RetVal= DecodeSubfield(&DefaultSubfield, CurrentPortionStartingOffset, CurrentPortionSize, PDMLFieldElement, &LoopCtrl, nullptr);
 
 			if (RetVal != nbSUCCESS)
 				goto DecodeChoice_SpeculativeDecodingFailure;
@@ -3593,7 +3506,7 @@ uint8_t InTheMiddleFailure= false;
 
 			DefaultSubfield.Name= (char *) NETPDL_SUBFIELD_NAME_TLV_LENGTH;
 			
-			RetVal= DecodeSubfield(&DefaultSubfield, CurrentPortionStartingOffset, CurrentPortionSize, PDMLFieldElement, &LoopCtrl, NULL);
+			RetVal= DecodeSubfield(&DefaultSubfield, CurrentPortionStartingOffset, CurrentPortionSize, PDMLFieldElement, &LoopCtrl, nullptr);
 
 			if (RetVal != nbSUCCESS)
 				goto DecodeChoice_SpeculativeDecodingFailure;
@@ -3604,7 +3517,7 @@ uint8_t InTheMiddleFailure= false;
 
 			DefaultSubfield.Name= (char *) NETPDL_SUBFIELD_NAME_TLV_VALUE;
 			
-			RetVal= DecodeSubfield(&DefaultSubfield, CurrentPortionStartingOffset, CurrentPortionSize, PDMLFieldElement, &LoopCtrl, NULL);
+			RetVal= DecodeSubfield(&DefaultSubfield, CurrentPortionStartingOffset, CurrentPortionSize, PDMLFieldElement, &LoopCtrl, nullptr);
 
 			if (RetVal != nbSUCCESS)
 				goto DecodeChoice_SpeculativeDecodingFailure;
@@ -3668,7 +3581,7 @@ uint8_t InTheMiddleFailure= false;
 
 			RegExpReturnCode= pcre_exec(
 				(pcre *) CfieldHdrlineElement->SeparatorPCRECompiledRegExp,		// the compiled pattern
-				NULL,											// no extra data - we didn't study the pattern
+				nullptr,											// no extra data - we didn't study the pattern
 				(char *) &m_packet[NewOffset],					// the subject string
 				FieldLen,										// the length of the subject
 				0,									// start at offset 0 in the subject
@@ -3683,7 +3596,7 @@ uint8_t InTheMiddleFailure= false;
 
 				DefaultSubfield.Name= (char *) NETPDL_SUBFIELD_NAME_HDRLINE_HNAME;
 					
-				RetVal= DecodeSubfield(&DefaultSubfield, CurrentPortionStartingOffset, CurrentPortionSize, PDMLFieldElement, &LoopCtrl, NULL);
+				RetVal= DecodeSubfield(&DefaultSubfield, CurrentPortionStartingOffset, CurrentPortionSize, PDMLFieldElement, &LoopCtrl, nullptr);
 
 				if (RetVal != nbSUCCESS)
 					goto DecodeChoice_SpeculativeDecodingFailure;
@@ -3698,7 +3611,7 @@ uint8_t InTheMiddleFailure= false;
 
 				DefaultSubfield.Name= (char *) NETPDL_SUBFIELD_NAME_HDRLINE_HNAME;
 				
-				RetVal= DecodeSubfield(&DefaultSubfield, CurrentPortionStartingOffset, CurrentPortionSize, PDMLFieldElement, &LoopCtrl, NULL);
+				RetVal= DecodeSubfield(&DefaultSubfield, CurrentPortionStartingOffset, CurrentPortionSize, PDMLFieldElement, &LoopCtrl, nullptr);
 
 				if (RetVal != nbSUCCESS)
 					goto DecodeChoice_SpeculativeDecodingFailure;
@@ -3709,7 +3622,7 @@ uint8_t InTheMiddleFailure= false;
 
 				DefaultSubfield.Name= (char *) NETPDL_SUBFIELD_NAME_HDRLINE_HVALUE;
 				
-				RetVal= DecodeSubfield(&DefaultSubfield, CurrentPortionStartingOffset, CurrentPortionSize, PDMLFieldElement, &LoopCtrl, NULL);
+				RetVal= DecodeSubfield(&DefaultSubfield, CurrentPortionStartingOffset, CurrentPortionSize, PDMLFieldElement, &LoopCtrl, nullptr);
 
 				if (RetVal != nbSUCCESS)
 					goto DecodeChoice_SpeculativeDecodingFailure;
@@ -3742,7 +3655,7 @@ uint8_t InTheMiddleFailure= false;
 			// Let's retrieve the matching offset vector to decode subfield
 			RegExpReturnCode= pcre_exec(
 				(pcre *) CfieldDynamicElement->PatternPCRECompiledRegExp,	// the compiled pattern
-				NULL,											// no extra data - we didn't study the pattern
+				nullptr,											// no extra data - we didn't study the pattern
 				(char *) &m_packet[PDMLFieldElement->Position],	// the subject string
 				PDMLFieldElement->Size,				// the length of the subject
 				0,									// start at offset 0 in the subject
@@ -3762,7 +3675,7 @@ uint8_t InTheMiddleFailure= false;
 				CurrentPortionStartingOffset= NewOffset + MatchingOffset[2*RegExpReturnCode];
 				CurrentPortionSize= MatchingOffset[2*RegExpReturnCode+1] - MatchingOffset[2*RegExpReturnCode];
 
-				RetVal= DecodeSubfield(&DefaultSubfield, CurrentPortionStartingOffset, CurrentPortionSize, PDMLFieldElement, &LoopCtrl, NULL);
+				RetVal= DecodeSubfield(&DefaultSubfield, CurrentPortionStartingOffset, CurrentPortionSize, PDMLFieldElement, &LoopCtrl, nullptr);
 
 				if (RetVal != nbSUCCESS)
 					goto DecodeChoice_SpeculativeDecodingFailure;
@@ -3796,7 +3709,7 @@ uint8_t InTheMiddleFailure= false;
 
 			DefaultSubfield.Name= (char *) NETPDL_SUBFIELD_NAME_ASN1_ENCRULEDATA;
 
-			RetVal= DecodeSubfield(&DefaultSubfield, CurrentPortionStartingOffset, CurrentPortionSize, PDMLFieldElement, &LoopCtrl, NULL);
+			RetVal= DecodeSubfield(&DefaultSubfield, CurrentPortionStartingOffset, CurrentPortionSize, PDMLFieldElement, &LoopCtrl, nullptr);
 
 			if (RetVal != nbSUCCESS)
 				goto DecodeChoice_SpeculativeDecodingFailure;
@@ -3822,7 +3735,7 @@ uint8_t InTheMiddleFailure= false;
 			m_netPDLVariables->SetVariableNumber(m_netPDLVariables->m_defaultVarList.CurrentOffset, CurrentOffset);
 			m_netPDLVariables->SetVariableNumber(m_netPDLVariables->m_defaultVarList.CurrentProtoOffset, CurrentOffset - m_protoStartingOffset);
 
-			if (ChoiceElement->FirstValidChildIfMissingPacketData == NULL)
+			if (ChoiceElement->FirstValidChildIfMissingPacketData == nullptr)
 			{
 				errorsnprintf(__FILE__, __FUNCTION__, __LINE__, m_errbuf, m_errbufSize, 
 					"Decoding of choice fails due to evaluation of matching expression '%s'.", TempFieldMatchElement->MatchExprString);
@@ -3863,7 +3776,7 @@ uint8_t InTheMiddleFailure= false;
 	}
 
 	// If all the fields-related matching expressions was evaluated without a positive match, let's restore before-'choice' state
-	if ( TempFieldMatchElement == NULL ) 
+	if ( TempFieldMatchElement == nullptr ) 
 	{
 		RollbackSpeculativeDecoding(PDMLStartingElement, PDMLFieldElement, PDMLEndingElement);
 		return nbSUCCESS;
@@ -3903,7 +3816,7 @@ uint8_t InTheMiddleFailure= false;
 	{
 		m_PDMLMaker->PDMLElementDiscard(PDMLFieldElement->FirstChild);
 
-		PDMLFieldElement->FirstChild= NULL;
+		PDMLFieldElement->FirstChild= nullptr;
 	}
 
 	/* 
@@ -3962,7 +3875,7 @@ DecodeChoice_EndTLVPortionCheck:
 								PDMLTempSubfieldElement->Size, 
 								PDMLFieldElement, 
 								&LoopCtrl, 
-								NetPDLElementSubfield->ComplexSubfieldInfo? NULL : PDMLTempSubfieldElement);
+								NetPDLElementSubfield->ComplexSubfieldInfo? nullptr : PDMLTempSubfieldElement);
 
 							InTheMiddleFailure+= RetVal != nbSUCCESS;
 
@@ -3988,7 +3901,7 @@ DecodeChoice_EndTLVPortionCheck:
 							if ( strncmp(NetPDLElementSubfield->PortionName, NETPDL_SUBFIELD_NAME_HDRLINE_HNAME, strlen(NETPDL_SUBFIELD_NAME_HDRLINE_HNAME)) == 0 )
 								{ PDMLTempSubfieldElement= PDMLFieldElement->FirstChild; goto DecodeChoice_EndHdrlinePortionCheck; }
 							if ( strncmp(NetPDLElementSubfield->PortionName, NETPDL_SUBFIELD_NAME_HDRLINE_HVALUE, strlen(NETPDL_SUBFIELD_NAME_HDRLINE_HVALUE)) == 0 )
-								{ if ((PDMLTempSubfieldElement= PDMLFieldElement->FirstChild->NextField) != NULL) goto DecodeChoice_EndHdrlinePortionCheck; }
+								{ if ((PDMLTempSubfieldElement= PDMLFieldElement->FirstChild->NextField) != nullptr) goto DecodeChoice_EndHdrlinePortionCheck; }
 
 							InTheMiddleFailure= true;
 							break;
@@ -4012,7 +3925,7 @@ DecodeChoice_EndHdrlinePortionCheck:
 								PDMLTempSubfieldElement->Size, 
 								PDMLFieldElement, 
 								&LoopCtrl, 
-								NetPDLElementSubfield->ComplexSubfieldInfo? NULL : PDMLTempSubfieldElement);
+								NetPDLElementSubfield->ComplexSubfieldInfo? nullptr : PDMLTempSubfieldElement);
 
 							InTheMiddleFailure+= RetVal != nbSUCCESS;
 
@@ -4057,7 +3970,7 @@ DecodeChoice_EndHdrlinePortionCheck:
 										PDMLTempSubfieldElement->Size, 
 										PDMLFieldElement, 
 										&LoopCtrl, 
-										NetPDLElementSubfield->ComplexSubfieldInfo? NULL : PDMLTempSubfieldElement);
+										NetPDLElementSubfield->ComplexSubfieldInfo? nullptr : PDMLTempSubfieldElement);
 
 									InTheMiddleFailure+= RetVal != nbSUCCESS;
 
@@ -4076,7 +3989,7 @@ DecodeChoice_EndHdrlinePortionCheck:
 			}; break;
 		default:
 			{
-			unsigned int CurrentOffsetBuffer;
+			unsigned long long CurrentOffsetBuffer;
 
 				// Save the offset of the next sibling field; we need to restore this offset as soon as we decoded child fields
 				m_netPDLVariables->GetVariableNumber(m_netPDLVariables->m_defaultVarList.CurrentOffset, &CurrentOffsetBuffer);
@@ -4175,19 +4088,19 @@ DecodeChoice_Rollback:
 
 void CNetPDLProtoDecoder::RollbackSpeculativeDecoding(struct _nbPDMLField *PDMLStartingElement, struct _nbPDMLField *PDMLFieldElement, struct _nbPDMLField *PDMLEndingElement)
 {
-	if (PDMLStartingElement != NULL)
+	if (PDMLStartingElement != nullptr)
 	{
 		memset(PDMLStartingElement, 0, sizeof(struct _nbPDMLField));
 
 		m_PDMLMaker->PDMLElementDiscard(PDMLStartingElement);
 	}
 
-	if (PDMLFieldElement != NULL)
+	if (PDMLFieldElement != nullptr)
 	{
 	struct _nbPDMLField *PDMLFieldElementTempChild= PDMLFieldElement->FirstChild;
 
 		// If there are subfields-related PDML elements, let's discard them
-		if (PDMLFieldElementTempChild != NULL)
+		if (PDMLFieldElementTempChild != nullptr)
 		{
 			// Reach last subfields-related PDML element allocated by speculative decoding that have got a sibling
 			while (PDMLFieldElementTempChild->NextField)
@@ -4214,7 +4127,7 @@ void CNetPDLProtoDecoder::RollbackSpeculativeDecoding(struct _nbPDMLField *PDMLS
 		m_PDMLMaker->PDMLElementDiscard(PDMLFieldElement);
 	}
 
-	if (PDMLEndingElement != NULL)
+	if (PDMLEndingElement != nullptr)
 	{
 		memset(PDMLEndingElement, 0, sizeof(struct _nbPDMLField));
 
@@ -4324,17 +4237,17 @@ int RetVal;
 	if (m_PDMLProtoItem)	// When we start decoding the packet, PDMLProtoItem is NULL
 		FirstPDMLField= m_PDMLProtoItem->FirstField;
 	else
-		FirstPDMLField= NULL;
+		FirstPDMLField= nullptr;
 
 	// Scan the encapsulation section
-	while (EncapElement != NULL)
+	while (EncapElement != nullptr)
 	{
 		switch (EncapElement->Type)
 		{
 			case nbNETPDL_IDEL_NEXTPROTO:
 			{
 			struct _nbNetPDLElementNextProto *NextProtoElement;
-			unsigned int NextProtoIndex;
+			unsigned long long NextProtoIndex;
 
 				NextProtoElement= (struct _nbNetPDLElementNextProto *) EncapElement;
 
@@ -4357,8 +4270,8 @@ int RetVal;
 			case nbNETPDL_IDEL_NEXTPROTOCANDIDATE:
 			{
 			struct _nbNetPDLElementNextProto *NextProtoElement;
-			unsigned int NextProtoIndex;
-			unsigned int VerifyResult;
+			unsigned long long NextProtoIndex;
+			unsigned long long VerifyResult;
 
 				NextProtoElement= (struct _nbNetPDLElementNextProto *) EncapElement;
 
@@ -4438,7 +4351,7 @@ int RetVal;
 			{
 			struct _nbNetPDLElementIf *IfElement;
 			struct _nbNetPDLElementBase *NestedNextProtoElement;
-			unsigned int Result;
+			unsigned long long Result;
 
 				IfElement= (struct _nbNetPDLElementIf *) EncapElement;
 			
@@ -4533,7 +4446,7 @@ struct _nbPDMLField *FirstPDMLField;
 	if (m_PDMLProtoItem)	// When we start decoding the packet, PDMLProtoItem is NULL
 		FirstPDMLField= m_PDMLProtoItem->FirstField;
 	else
-		FirstPDMLField= NULL;
+		FirstPDMLField= nullptr;
 
 	// Let's initialize the protocol verification to "not found"
 	m_netPDLVariables->SetVariableNumber(m_netPDLVariables->m_defaultVarList.ProtoVerifyResult, NETPDL_PROTOVERIFYRESULT_NOTFOUND);
@@ -4543,7 +4456,7 @@ struct _nbPDMLField *FirstPDMLField;
 	while(VerifyElement)
 	{
 	int RetVal;
-	unsigned int Result= 1;
+	unsigned long long Result= 1;
 
 		if (VerifyElement->WhenExprTree)
 		{
@@ -4586,7 +4499,7 @@ struct _nbPDMLField *FirstPDMLField;
 	if (m_PDMLProtoItem)	// When we start decoding the packet, PDMLProtoItem is NULL
 		FirstPDMLField= m_PDMLProtoItem->FirstField;
 	else
-		FirstPDMLField= NULL;
+		FirstPDMLField= nullptr;
 
 	while (ExecuteElement)
 	{
@@ -4620,7 +4533,7 @@ struct _nbPDMLField *FirstPDMLField;
 			case nbNETPDL_IDEL_IF:
 			{
 			struct _nbNetPDLElementIf *IfNode;
-			unsigned int Result;
+			unsigned long long Result;
 
 				IfNode= (struct _nbNetPDLElementIf *) ExecuteElement;
 

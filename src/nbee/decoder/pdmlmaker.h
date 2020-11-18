@@ -8,14 +8,12 @@
 
 #pragma once
 
-#include <pcap.h>
-
 #include "netpdlvariables.h"
 #include "netpdlexpression.h"
 #include "showplugin/show_plugin.h"
 #include "pdmlreader.h"
 #include "../utils/asciibuffer.h"
-
+#include "globals/pcap_structures.h"
 
 //! Maximum number of elements allowed within the temp list.
 #define PDML_MAX_TEMP_ELEMENTS 100
@@ -62,14 +60,13 @@ public:
 	// Utilities
 	struct _nbPDMLPacket *GetPDMLPacketInfo();
 	void PacketGenInfoInitialize(const struct pcap_pkthdr *PcapHeader, const unsigned char * PcapPktData, int PacketCounter);
-	int GetNetPDLShowDefaultType(DOMElement *NetPDLElement);
 	int PacketDecodingEnded();
 
 	static int ScanForFieldRefAttrib(struct _nbPDMLField *PMDLField, char *ProtoName, 
 		char *FieldName, int AttribCode, char **AttribValue, char *ErrBuf, int ErrBufSize);
 
 	static int ScanForFieldRefValue(struct _nbPDMLField *PDMLField, char *ProtoName, char *FieldName, 
-		unsigned int *FieldOffset, unsigned int *FieldSize, char **FieldMask, char *ErrBuf, int ErrBufSize);
+		unsigned long long *FieldOffset, unsigned long long* FieldSize, char **FieldMask, char *ErrBuf, long long ErrBufSize);
 
 	static int ScanForFieldRef(struct _nbPDMLField *PDMLField, char *ProtoName, 
 		char *FieldName, struct _nbPDMLField **PDMLLocatedField, char *ErrBuf, int ErrBufSize);

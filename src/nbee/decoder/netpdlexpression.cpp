@@ -81,14 +81,14 @@ CNetPDLExpression::~CNetPDLExpression()
 	which is meaningful only in case of success.
 	In case of error, the error message can be retrieved by the GetLastError() method.
 */
-int CNetPDLExpression::EvaluateSwitch(struct _nbNetPDLElementSwitch *SwitchNodeInfo, 
+long long CNetPDLExpression::EvaluateSwitch(struct _nbNetPDLElementSwitch *SwitchNodeInfo, 
 									  struct _nbPDMLField *PDMLStartField, struct _nbNetPDLElementCase **Result)
 {
-long RetVal;
-unsigned int KeyValue;
+long long RetVal;
+unsigned long long KeyValue;
 unsigned char *KeyString = NULL;
 unsigned char *TmpString;
-unsigned int KeyStringSize;
+unsigned long long KeyStringSize;
 bool CompareAsString;
 struct _nbNetPDLElementCase *CaseListInfo;
 
@@ -209,12 +209,12 @@ struct _nbNetPDLElementCase *CaseListInfo;
 	the packet buffer that appears to be truncated, it returns nbWARNING. This return code
 	should not be managed as critical error, since there are cases in which this is not avoidable.
 */
-int CNetPDLExpression::EvaluateExprString(struct _nbNetPDLExprBase *ExprNode, struct _nbPDMLField *PDMLStartField,
-									  unsigned char **ResultString, unsigned int *ResultStringLen)
+long long CNetPDLExpression::EvaluateExprString(struct _nbNetPDLExprBase *ExprNode, struct _nbPDMLField *PDMLStartField,
+									  unsigned char **ResultString, unsigned long long *ResultStringLen)
 {
 struct _nbNetPDLExpression* Expression;
 char *Mask;
-int RetVal;
+long long RetVal;;
 
 	// If this is not a complex expression, let's return the result right now
 	if (ExprNode->Type != nbNETPDL_ID_EXPR_OPERAND_EXPR)
@@ -296,14 +296,14 @@ success:
 	should not be managed as critical error, since there are cases in which this is not avoidable.
 */
 
-int CNetPDLExpression::EvaluateExprNumber(struct _nbNetPDLExprBase *ExprNode, struct _nbPDMLField *PDMLStartField, unsigned int *Result)
+long long CNetPDLExpression::EvaluateExprNumber(struct _nbNetPDLExprBase *ExprNode, struct _nbPDMLField *PDMLStartField, unsigned long long* Result)
 {
 struct _nbNetPDLExpression* Expression;
 unsigned char *Value1Buffer, *Value2Buffer;
 char *Mask1Buffer, *Mask2Buffer;
-unsigned int Value1BufferSize, Value2BufferSize;
-unsigned int Value1Number, Value2Number;
-int RetVal;
+unsigned long long Value1BufferSize, Value2BufferSize;
+unsigned long long Value1Number, Value2Number;
+long long RetVal;;
 
 	// If this is not a complex expression, let's return the result right now
 	if (ExprNode->Type != nbNETPDL_ID_EXPR_OPERAND_EXPR)
@@ -394,7 +394,7 @@ int RetVal;
 			}
 			else
 			{
-			int Size= MIN(Value1BufferSize, Value2BufferSize);
+			auto Size= MIN(Value1BufferSize, Value2BufferSize);
 
 				if (memcmp(Value1Buffer, Value2Buffer, Size) > 0)
 					*Result= true;
@@ -414,7 +414,7 @@ int RetVal;
 			}
 			else
 			{
-			int Size= MIN(Value1BufferSize, Value2BufferSize);
+			auto Size= MIN(Value1BufferSize, Value2BufferSize);
 
 				if (memcmp(Value1Buffer, Value2Buffer, Size) < 0)
 					*Result= true;
@@ -434,7 +434,7 @@ int RetVal;
 			}
 			else
 			{
-			int Size= MIN(Value1BufferSize, Value2BufferSize);
+			auto Size= MIN(Value1BufferSize, Value2BufferSize);
 
 				if (memcmp(Value1Buffer, Value2Buffer, Size) == 0)
 					*Result= true;
@@ -454,7 +454,7 @@ int RetVal;
 			}
 			else
 			{
-			int Size= MIN(Value1BufferSize, Value2BufferSize);
+			auto Size= MIN(Value1BufferSize, Value2BufferSize);
 
 				if (memcmp(Value1Buffer, Value2Buffer, Size) == 0)
 					*Result= false;
@@ -509,9 +509,9 @@ success:
 	\return nbSUCCESS if everything is fine, nbFAILURE in case or error.
 	In case of error, the error message can be retrieved by the GetLastError() method.
 */
-int CNetPDLExpression::GetOperandNumber(struct _nbNetPDLExprBase *OperandBase, struct _nbPDMLField *PDMLStartField, unsigned int *ResultValue)
+long long CNetPDLExpression::GetOperandNumber(struct _nbNetPDLExprBase *OperandBase, struct _nbPDMLField *PDMLStartField, unsigned long long* ResultValue)
 {
-int RetVal;
+long long RetVal;
 
 	switch (OperandBase->Type)
 	{
@@ -541,7 +541,7 @@ int RetVal;
 
 			Operand= (struct _nbNetPDLExprVariable*) OperandBase;
 
-			m_netPDLVariables->GetVariableNumber( (long) Operand->CustomData, ResultValue);
+			m_netPDLVariables->GetVariableNumber(reinterpret_cast<long long>(Operand->CustomData), ResultValue);
 			
 			return nbSUCCESS;
 		}
@@ -552,7 +552,7 @@ int RetVal;
 
 			Operand= (struct _nbNetPDLExprLookupTable*) OperandBase;
 
-			m_netPDLVariables->GetTableDataNumber( (long) Operand->TableCustomData, (long) Operand->FieldCustomData, ResultValue);
+			m_netPDLVariables->GetTableDataNumber(reinterpret_cast<long long>(Operand->TableCustomData), reinterpret_cast<long long>(Operand->FieldCustomData), ResultValue);
 			
 			return nbSUCCESS;
 		}
@@ -572,8 +572,8 @@ int RetVal;
 		struct _nbNetPDLExprFunctionIsASN1Type* Operand;
 		unsigned char *BufferValue;
 		char *BufferMask;
-		unsigned int BufferMaxSize;
-		unsigned int Tag, Class;
+		unsigned long long BufferMaxSize;
+		unsigned long long Tag, Class;
 
 			Operand= (struct _nbNetPDLExprFunctionIsASN1Type *) OperandBase;
 
@@ -658,7 +658,7 @@ int RetVal;
 		struct _nbNetPDLExprFunctionRegExp* Operand;
 		int RexExpReturnCode;
 		unsigned char *TmpString;
-		unsigned int TmpStringSize;
+		unsigned long long TmpStringSize;
 		int MatchingOffset[MATCHING_OFFSET_COUNT];
 
 			Operand= (struct _nbNetPDLExprFunctionRegExp*) OperandBase;
@@ -677,14 +677,14 @@ int RetVal;
 #endif
 
 			RexExpReturnCode= pcre_exec(
-				(pcre *) Operand->PCRECompiledRegExp,		// the compiled pattern
-				NULL,								// no extra data - we didn't study the pattern
-				(char*) TmpString,							// the subject string
-				TmpStringSize,						// the length of the subject
-				0,									// start at offset 0 in the subject
-				0,									// default options
-				MatchingOffset,						// output vector for substring information
-				MATCHING_OFFSET_COUNT);				// number of elements in the output vector
+                reinterpret_cast<const pcre*>(Operand->PCRECompiledRegExp), // the compiled pattern
+				NULL,								                        // no extra data - we didn't study the pattern
+				reinterpret_cast<char*>(TmpString),                         // the subject string
+				static_cast<int>(TmpStringSize),                            // the length of the subject
+				0,									                        // start at offset 0 in the subject
+				0,									                        // default options
+				MatchingOffset,						                        // output vector for substring information
+				MATCHING_OFFSET_COUNT);				                        // number of elements in the output vector
 
 			if (RexExpReturnCode >= 0)	// Match found
 			{
@@ -709,8 +709,8 @@ int RetVal;
 		struct _nbNetPDLExprFunctionBuf2Int* Operand;
 		unsigned char *BufferValue;
 		char *BufferMask;
-		unsigned int BufferMaxSize;
-		int Number, Mask;
+		unsigned long long BufferMaxSize;
+		long long Number, Mask;
 
 			Operand= (struct _nbNetPDLExprFunctionBuf2Int*) OperandBase;
 			
@@ -721,14 +721,14 @@ int RetVal;
 
 			if (BufferMask == NULL)
 			{
-				*ResultValue= NetPDLHexDumpToLong(BufferValue, BufferMaxSize, 1);
+				*ResultValue= NetPDLHexDumpToLong(BufferValue, static_cast<long>(BufferMaxSize), 1);
 				return nbSUCCESS;
 			}
 			else
 			{
-				Number= NetPDLHexDumpToLong(BufferValue, BufferMaxSize, 1);
+				Number= NetPDLHexDumpToLong(BufferValue, static_cast<long>(BufferMaxSize), 1);
 				// Being an ascii buffer, its size is two times the buffer that contains the number
-				Mask= NetPDLAsciiStringToLong((char*) BufferMask, BufferMaxSize * 2, 16);
+				Mask= NetPDLAsciiStringToLong(reinterpret_cast<char*>(BufferMask), static_cast<long>(BufferMaxSize * 2), 16);
 
 				// Rotate until the last bit is '0'
 				while ((Mask & 0x01) == 0)
@@ -747,7 +747,7 @@ int RetVal;
 		{
 		struct _nbNetPDLExprFunctionAscii2Int* Operand;
 		unsigned char *ResultString;
-		unsigned int ResultStringLen;
+		unsigned long long ResultStringLen;
 
 			Operand= (struct _nbNetPDLExprFunctionAscii2Int*) OperandBase;
 
@@ -756,7 +756,7 @@ int RetVal;
 			if (RetVal != nbSUCCESS)
 				return RetVal;
 
-			*ResultValue= NetPDLAsciiStringToLong((char*) ResultString, ResultStringLen, 10);
+			*ResultValue= NetPDLAsciiStringToLong(reinterpret_cast<char*>(ResultString), static_cast<long>(ResultStringLen), 10);
 
 			return nbSUCCESS;
 		}
@@ -764,9 +764,9 @@ int RetVal;
 		case nbNETPDL_ID_EXPR_OPERAND_FUNCTION_ISPRESENT:
 		{
 		struct _nbNetPDLExprFunctionIsPresent* Operand;
-		unsigned int FieldOffset;		// This variable is useless, however needed for calling ScanForFieldRefValue()
+		unsigned long long FieldOffset;		// This variable is useless, however needed for calling ScanForFieldRefValue()
 		char *BufferMask;		// This variable is useless, however needed for calling ScanForFieldRefValue()
-		unsigned int BufferMaxSize;		// This variable is useless, however needed for calling ScanForFieldRefValue()
+		unsigned long long BufferMaxSize;		// This variable is useless, however needed for calling ScanForFieldRefValue()
 
 			Operand= (struct _nbNetPDLExprFunctionIsPresent*) OperandBase;
 
@@ -799,15 +799,15 @@ int RetVal;
 		{
 		struct _nbNetPDLExprFunctionCheckUpdateLookupTable* Operand;
 		struct _nbLookupTableKey* KeyList;
-		unsigned int value;
+		unsigned long long value;
 		struct _nbParamsLinkedList* KeyParameter;
-		unsigned int Timestamp;
-		int TableID;
+		unsigned long long Timestamp;
+		long long TableID;
 		int i;
 		
 			Operand= (struct _nbNetPDLExprFunctionCheckUpdateLookupTable*) OperandBase;
 
-			TableID= (long) Operand->LookupTableCustomData;
+			TableID = reinterpret_cast<long long>(Operand->LookupTableCustomData);
 
 			KeyList= m_netPDLVariables->GetStructureForTableKey(TableID);
 			if (KeyList == NULL)
@@ -823,7 +823,7 @@ int RetVal;
 					case nbNETPDL_ID_EXPR_RETURNTYPE_NUMBER:
 					{	
 						RetVal= EvaluateExprNumber(KeyParameter->Expression, PDMLStartField, &value);
-						*(KeyList[i].Value) = value;
+						*(KeyList[i].Value) = static_cast<unsigned char>(value);
 						if (RetVal != nbSUCCESS)
 							return RetVal;
 					}; break;
@@ -849,9 +849,9 @@ int RetVal;
 			m_netPDLVariables->GetVariableNumber(m_netPDLVariables->m_defaultVarList.TimestampSec, &Timestamp);
 
 			if (OperandBase->Type == nbNETPDL_ID_EXPR_OPERAND_FUNCTION_CHECKLOOKUPTABLE)
-				RetVal= m_netPDLVariables->LookupForTableEntry(TableID, KeyList, Timestamp, 1, 1, 1);
+				RetVal= m_netPDLVariables->LookupForTableEntry(TableID, KeyList, static_cast<long>(Timestamp), 1, 1, 1);
 			else
-				RetVal= m_netPDLVariables->LookupAndUpdateTableEntry(TableID, KeyList, Timestamp);
+				RetVal= m_netPDLVariables->LookupAndUpdateTableEntry(TableID, KeyList, static_cast<long>(Timestamp));
 
 			if (RetVal == nbSUCCESS)
 			{
@@ -913,10 +913,10 @@ int RetVal;
 	\return nbSUCCESS if everything is fine, nbFAILURE in case or error.
 	In case of error, the error message can be retrieved by the GetLastError() method.
 */
-int CNetPDLExpression::GetOperandBuffer(struct _nbNetPDLExprBase *OperandBase, struct _nbPDMLField *PDMLStartField, 
-								  unsigned char **BufferValue, char **BufferMask, unsigned int *BufferMaxSize)
+long long CNetPDLExpression::GetOperandBuffer(struct _nbNetPDLExprBase *OperandBase, struct _nbPDMLField *PDMLStartField, 
+								  unsigned char **BufferValue, char **BufferMask, unsigned long long* BufferMaxSize)
 {
-int RetVal;
+long long RetVal;;
 
 	switch (OperandBase->Type)
 	{
@@ -936,7 +936,7 @@ int RetVal;
 		case nbNETPDL_ID_EXPR_OPERAND_VARIABLE:
 		{
 		struct _nbNetPDLExprVariable* Operand;
-		unsigned int StartAt, Size;
+		unsigned long long StartAt, Size;
 
 			Operand= (struct _nbNetPDLExprVariable*) OperandBase;
 
@@ -958,7 +958,7 @@ int RetVal;
 			else
 				Size= 0;
 
-			RetVal= m_netPDLVariables->GetVariableBuffer((long) (Operand->CustomData), StartAt, Size, BufferValue, BufferMaxSize);
+			RetVal= m_netPDLVariables->GetVariableBuffer(reinterpret_cast<long long>(Operand->CustomData), StartAt, Size, BufferValue, BufferMaxSize);
 
 			if (RetVal != nbSUCCESS)
 				return RetVal;
@@ -972,7 +972,7 @@ int RetVal;
 		case nbNETPDL_ID_EXPR_OPERAND_LOOKUPTABLE:
 		{
 		struct _nbNetPDLExprLookupTable* Operand;
-		unsigned int StartAt, Size;
+		unsigned long long StartAt, Size;
 
 			Operand= (struct _nbNetPDLExprLookupTable*) OperandBase;
 
@@ -994,7 +994,7 @@ int RetVal;
 			else
 				Size= 0;
 
-			RetVal= m_netPDLVariables->GetTableDataBuffer((long) (Operand->TableCustomData), (long) (Operand->FieldCustomData),
+			RetVal= m_netPDLVariables->GetTableDataBuffer(reinterpret_cast<long long>(Operand->TableCustomData), reinterpret_cast<long long>(Operand->FieldCustomData),
 															StartAt, Size, BufferValue, BufferMaxSize);
 
 			if (RetVal != nbSUCCESS)
@@ -1012,9 +1012,9 @@ int RetVal;
 		char *FieldName;
 		char *FirstField;
 		char *CurrentField;
-		unsigned int FieldOffset;
-		unsigned int StartAt;
-		unsigned int BufferSize;
+		unsigned long long FieldOffset;
+		unsigned long long StartAt;
+		unsigned long long BufferSize;
 
 			Operand= (struct _nbNetPDLExprFieldRef*) OperandBase;
 
@@ -1151,9 +1151,9 @@ int RetVal;
 		struct _nbNetPDLExprFieldRef* Operand;
 		char *FieldName;
 		char *CurrentField;
-		unsigned int FieldOffset;
-		unsigned int StartAt;
-		unsigned int BufferSize;
+		unsigned long long FieldOffset;
+		unsigned long long StartAt;
+		unsigned long long BufferSize;
 
 			Operand= (struct _nbNetPDLExprFieldRef*) OperandBase;
 
@@ -1289,7 +1289,7 @@ int RetVal;
 		struct _nbNetPDLExprFunctionRegExp* Operand;
 		int RexExpReturnCode;
 		unsigned char *TmpString;
-		unsigned int TmpStringSize;
+		unsigned long long TmpStringSize;
 		int MatchingOffset[MATCHING_OFFSET_COUNT];
 
 			Operand= (struct _nbNetPDLExprFunctionRegExp*) OperandBase;
@@ -1307,14 +1307,14 @@ int RetVal;
 #endif
 
 			RexExpReturnCode= pcre_exec(
-				(pcre *) Operand->PCRECompiledRegExp,		// the compiled pattern
-				NULL,								// no extra data - we didn't study the pattern
-				(char*) TmpString,					// the subject string
-				TmpStringSize,						// the length of the subject
-				0,									// start at offset 0 in the subject
-				0,									// default options
-				MatchingOffset,						// output vector for substring information
-				MATCHING_OFFSET_COUNT);				// number of elements in the output vector
+				reinterpret_cast<pcre*>(Operand->PCRECompiledRegExp), // the compiled pattern
+				NULL,								                  // no extra data - we didn't study the pattern
+				reinterpret_cast<char*>(TmpString),                   // the subject string
+				static_cast<long>(TmpStringSize),	                  // the length of the subject
+				0,									                  // start at offset 0 in the subject
+				0,									                  // default options
+				MatchingOffset,						                  // output vector for substring information
+				MATCHING_OFFSET_COUNT);				                  // number of elements in the output vector
 
 			if (RexExpReturnCode >= 0)	// Match found
 			{
@@ -1350,7 +1350,7 @@ int RetVal;
 		case nbNETPDL_ID_EXPR_OPERAND_FUNCTION_INT2BUF:
 		{
 		struct _nbNetPDLExprFunctionInt2Buf* Operand;
-		unsigned int Result;
+		unsigned long long Result;
 
 			Operand= (struct _nbNetPDLExprFunctionInt2Buf*) OperandBase;
 			
@@ -1359,7 +1359,7 @@ int RetVal;
 			if (RetVal != nbSUCCESS)
 				return RetVal;
 
-			NetPDLLongToHexDump(Result, Operand->ResultSize, Operand->Result);
+			NetPDLLongToHexDump(static_cast<long>(Result), Operand->ResultSize, Operand->Result);
 
 			*BufferValue= Operand->Result;
 			*BufferMaxSize= Operand->ResultSize;
@@ -1371,7 +1371,7 @@ int RetVal;
 		case nbNETPDL_ID_EXPR_OPERAND_FUNCTION_CHANGEBYTEORDER:
 		{
 		struct _nbNetPDLExprFunctionChangeByteOrder* Operand;
-		unsigned int ResultStringLen;
+		unsigned long long ResultStringLen;
 		unsigned char *ResultString;
 
 			Operand= (struct _nbNetPDLExprFunctionChangeByteOrder*) OperandBase;
@@ -1453,12 +1453,12 @@ int RetVal;
 	\return nbSUCCESS if everything is fine, nbFAILURE in case or error.
 	In case of error, the error message is stored in the m_errbuf variable.
 */
-int CNetPDLExpression::EvaluateAssignVariable(struct _nbNetPDLElementAssignVariable *AssignVariableElement, struct _nbPDMLField *PDMLStartField)
+long long CNetPDLExpression::EvaluateAssignVariable(struct _nbNetPDLElementAssignVariable *AssignVariableElement, struct _nbPDMLField *PDMLStartField)
 {
-unsigned int Value;
+unsigned long long Value;
 unsigned char* BufferValue;
-unsigned int BufferValueSize;
-int RetVal;
+unsigned long long BufferValueSize;
+long long RetVal;
 
 	switch (AssignVariableElement->VariableDataType)
 	{
@@ -1470,7 +1470,7 @@ int RetVal;
 			if (RetVal != nbSUCCESS)
 				return RetVal;
 
-			m_netPDLVariables->SetVariableNumber((long) (AssignVariableElement->CustomData), Value);
+			m_netPDLVariables->SetVariableNumber(reinterpret_cast<long long>(AssignVariableElement->CustomData), Value);
 
 			return nbSUCCESS;
 
@@ -1491,7 +1491,7 @@ int RetVal;
 			}
 #endif
 
-			m_netPDLVariables->SetVariableBuffer((long) (AssignVariableElement->CustomData), BufferValue, AssignVariableElement->OffsetStartAt, BufferValueSize);
+			m_netPDLVariables->SetVariableBuffer(reinterpret_cast<long long>(AssignVariableElement->CustomData), BufferValue, AssignVariableElement->OffsetStartAt, BufferValueSize);
 			return nbSUCCESS;
 
 		}; break;
@@ -1511,7 +1511,7 @@ int RetVal;
 			}
 #endif
 
-			m_netPDLVariables->SetVariableRefBuffer((long) (AssignVariableElement->CustomData), BufferValue, AssignVariableElement->OffsetStartAt, BufferValueSize);
+			m_netPDLVariables->SetVariableRefBuffer(reinterpret_cast<long long>(AssignVariableElement->CustomData), BufferValue, AssignVariableElement->OffsetStartAt, BufferValueSize);
 
 			return nbSUCCESS;
 
@@ -1541,12 +1541,12 @@ int RetVal;
 	\return nbSUCCESS if everything is fine, nbFAILURE in case or error.
 	In case of error, the error message is stored in the m_errbuf variable.
 */
-int CNetPDLExpression::EvaluateAssignLookupTable(struct _nbNetPDLElementAssignLookupTable *LookupTable, struct _nbPDMLField *PDMLStartField)
+long long CNetPDLExpression::EvaluateAssignLookupTable(struct _nbNetPDLElementAssignLookupTable *LookupTable, struct _nbPDMLField *PDMLStartField)
 {
-int RetVal;
-unsigned int Value;
+long long RetVal;;
+unsigned long long Value;
 unsigned char* BufferValue;
-unsigned int BufferValueSize;
+unsigned long long BufferValueSize;
 
 	switch (LookupTable->FieldDataType)
 	{
@@ -1558,7 +1558,7 @@ unsigned int BufferValueSize;
 			if (RetVal != nbSUCCESS)
 				return RetVal;
 
-			RetVal= m_netPDLVariables->SetTableDataNumber((long) (LookupTable->TableCustomData), (long) (LookupTable->FieldCustomData), Value);
+			RetVal= m_netPDLVariables->SetTableDataNumber(reinterpret_cast<long long>(LookupTable->TableCustomData), reinterpret_cast<long long>(LookupTable->FieldCustomData), Value);
 
 			return RetVal;
 
@@ -1578,7 +1578,7 @@ unsigned int BufferValueSize;
 				return nbFAILURE;
 			}
 #endif
-			RetVal= m_netPDLVariables->SetTableDataBuffer((long) (LookupTable->TableCustomData), (long) (LookupTable->FieldCustomData), BufferValue, LookupTable->OffsetStartAt, BufferValueSize);
+			RetVal= m_netPDLVariables->SetTableDataBuffer(reinterpret_cast<long long>(LookupTable->TableCustomData), reinterpret_cast<long long>(LookupTable->FieldCustomData), BufferValue, LookupTable->OffsetStartAt, BufferValueSize);
 
 			return RetVal;
 
@@ -1612,17 +1612,17 @@ unsigned int BufferValueSize;
 	The nbWARNING case does not corresponds to an error.
 	In case of error, the error message is stored in the m_errbuf variable.
 */
-int CNetPDLExpression::EvaluateLookupTable(struct _nbNetPDLElementUpdateLookupTable *LookupTableEntry, struct _nbPDMLField *PDMLStartField)
+long long CNetPDLExpression::EvaluateLookupTable(struct _nbNetPDLElementUpdateLookupTable *LookupTableEntry, struct _nbPDMLField *PDMLStartField)
 {
 struct _nbLookupTableKey* KeyList;
 struct _nbLookupTableData* DataList;
 struct _nbNetPDLElementLookupKeyData* TempKeyData;
-int RetVal;
-int TableID;
-unsigned int value;
-int i;
+long long RetVal;;
+long long TableID;
+unsigned long long value;
+long long i;
 
-	TableID= (long) LookupTableEntry->TableCustomData;
+	TableID= reinterpret_cast<long long>(LookupTableEntry->TableCustomData);
 
 	KeyList= m_netPDLVariables->GetStructureForTableKey(TableID);
 	if (KeyList == NULL)
@@ -1639,7 +1639,7 @@ int i;
 			case nbNETPDL_LOOKUPTABLE_KEYANDDATA_TYPE_PROTOCOL:
 			{
 				RetVal= EvaluateExprNumber(TempKeyData->ExprTree, PDMLStartField, &value);
-				*(KeyList[i].Value) = value;
+				*(KeyList[i].Value) = static_cast<unsigned char>(value);
 				if (RetVal != nbSUCCESS)
 					return RetVal;
 			}; break;
@@ -1670,7 +1670,7 @@ int i;
 	{
 		case nbNETPDL_UPDATELOOKUPTABLE_ACTION_ADD:
 		{
-		unsigned int Timestamp;
+		unsigned long long Timestamp;
 
 			DataList= m_netPDLVariables->GetStructureForTableData(TableID);
 			if (DataList == NULL)
@@ -1686,7 +1686,7 @@ int i;
 					case nbNETPDL_LOOKUPTABLE_KEYANDDATA_TYPE_NUMBER:
 					case nbNETPDL_LOOKUPTABLE_KEYANDDATA_TYPE_PROTOCOL:
 					{
-					unsigned int Value;
+					unsigned long long Value;
 
 						RetVal= EvaluateExprNumber(TempKeyData->ExprTree, PDMLStartField, &Value);
 						DataList[i].Value= (unsigned char*) Value;
@@ -1715,26 +1715,26 @@ int i;
 
 			m_netPDLVariables->GetVariableNumber(m_netPDLVariables->m_defaultVarList.TimestampSec, &Timestamp);
 
-			return (m_netPDLVariables->AddTableEntry(TableID, KeyList, DataList, Timestamp, LookupTableEntry->KeysHaveMasks, LookupTableEntry->Validity, LookupTableEntry->KeepTime, LookupTableEntry->HitTime, LookupTableEntry->NewHitTime));
+			return (m_netPDLVariables->AddTableEntry(TableID, KeyList, DataList, static_cast<long>(Timestamp), LookupTableEntry->KeysHaveMasks, LookupTableEntry->Validity, LookupTableEntry->KeepTime, LookupTableEntry->HitTime, LookupTableEntry->NewHitTime));
 
 		}; break;
 
 		case nbNETPDL_UPDATELOOKUPTABLE_ACTION_PURGE:
 		{
-		unsigned int Timestamp;
+		unsigned long long Timestamp;
 
 			m_netPDLVariables->GetVariableNumber(m_netPDLVariables->m_defaultVarList.TimestampSec, &Timestamp);
 
-			return (m_netPDLVariables->PurgeTableEntry(TableID, KeyList, LookupTableEntry->KeysHaveMasks, Timestamp));
+			return (m_netPDLVariables->PurgeTableEntry(TableID, KeyList, LookupTableEntry->KeysHaveMasks, static_cast<long>(Timestamp)));
 		}; break;
 
 		case nbNETPDL_UPDATELOOKUPTABLE_ACTION_OBSOLETE:
 		{
-		unsigned int Timestamp;
+		unsigned long long Timestamp;
 
 			m_netPDLVariables->GetVariableNumber(m_netPDLVariables->m_defaultVarList.TimestampSec, &Timestamp);
 
-			return (m_netPDLVariables->ObsoleteTableEntry(TableID, KeyList, LookupTableEntry->KeysHaveMasks, Timestamp));
+			return (m_netPDLVariables->ObsoleteTableEntry(TableID, KeyList, LookupTableEntry->KeysHaveMasks, static_cast<long>(Timestamp)));
 		}; break;
 
 		default:

@@ -267,8 +267,8 @@ namespace jit {
 	template <class IR, class BBType>
 	CFG<IR,BBType>::~CFG()
 	{
-		uint32_t size = this->m_NodeList.size();
-			for (uint32_t i = 0; i < size; i++)
+		auto size = this->m_NodeList.size();
+			for (decltype(size) i = 0; i < size; i++)
 			{
 				if (this->m_NodeList[i] != NULL)
 					delete this->m_NodeList[i]->NodeInfo;

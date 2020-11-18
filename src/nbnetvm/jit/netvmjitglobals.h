@@ -63,13 +63,13 @@ void *my_malloc(size_t sz);
 void *my_calloc(size_t n, size_t sz);
 #endif
 
-/* Unix stuff */
-#ifndef _WIN32
+/* Unix stuff
+#ifndef WIN32
 #define _snprintf snprintf
 #else
 #define snprintf _snprintf
 #endif
-
+ */
 
 #ifdef __cplusplus
 }
